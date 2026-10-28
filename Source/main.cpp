@@ -2,6 +2,7 @@
 #include <Player.h>
 #include <GameAssets.h>
 #include <Tiles.h>
+#include <Animation.h>
 
 #include <MapStorage.h>
 
@@ -49,9 +50,10 @@ int main() {
 
         BeginMode2D(camera);
 
-        Tiles::GetInstance().Draw();
+        Tiles::GetInstance().DrawVisibleRegion(camera);
 
         Player::GetInstance().DrawPlayer();
+
 
 
         EndMode2D();

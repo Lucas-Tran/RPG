@@ -4,6 +4,8 @@ project(RPG VERSION 0.10 LANGUAGES C CXX)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 20)
 
+target_compile_definitions(RPG PRIVATE ENABLE_LEVEL_EDITOR)
+
 
 include_directories(${CMAKE_SOURCE_DIR}/Dependencies/Headers ${CMAKE_SOURCE_DIR}/Headers)
 link_directories(${CMAKE_SOURCE_DIR}/Dependencies/Libraries)

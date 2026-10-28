@@ -54,11 +54,32 @@ void Tiles::SetTile(int index, short tile) {
     map[index] = tile;
 }
 
-void Tiles::Draw() {
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            int gidx = y * width + x;
-            DrawTexture(GameAssets::GetInstance().GetTile(map[gidx]), x * TILE_SIZE, y * TILE_SIZE, WHITE);
+int Tiles::GetWidth() const {
+    return width;
+}
+
+int Tiles::GetHeight() const {
+    return height;
+}
+
+constexpr short BACKGROUND_TILE = 24;
+
+void Tiles::DrawVisibleRegion(Camera2D& camera2D) const {
+    int screenWidthTiles = GetScreenWidth() / TILE_SIZE + 2;
+    int screenHeightTiles = GetScreenHeight() / TILE_SIZE + 2;
+    int drawOffsetX = -static_cast<int>(camera2D.offset.x);
+    int drawOffsetY = -static_cast<int>(camera2D.offset.y);
+    int gridX = static_cast<int>(floor((camera2D.target.x + drawOffsetX) / TILE_SIZE));
+    int gridY = static_cast<int>(floor((camera2D.target.y + drawOffsetY) / TILE_SIZE));
+    for (int y = gridY; y < gridY + screenHeightTiles; y++) {
+        for (int x = gridX; x < gridX + screenWidthTiles; x++) {
+            int gridIndex = y * width + x;
+            float tileX = static_cast<float>(x) * TILE_SIZE;
+            float tileY = static_cast<float>(y) * TILE_SIZE;
+                DrawTexture(GameAssets::GetInstance().GetTile(BACKGROUND_TILE), tileX, tileY, WHITE);
+            if (gridIndex >= 0 && gridIndex < width * height && GetTile(gridIndex) != EMPTY_TILE) {
+                DrawTexture(GameAssets::GetInstance().GetTile(GetTile(gridIndex)), tileX, tileY, WHITE);
+            }
         }
     }
 }

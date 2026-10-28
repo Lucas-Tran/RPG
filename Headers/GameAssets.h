@@ -3,6 +3,34 @@
 
 #include <Engine.h>
 
+#include <Animation.h>
+
+class AnimationAllDirections {
+public:
+    AnimationAllDirections(std::string prefixPath, float delay);
+
+    Animation& GetRightAnimation();
+    Animation& GetLeftAnimation();
+    Animation& GetUpAnimation();
+    Animation& GetDownAnimation();
+private:
+    Animation rightAnimation;
+    Animation leftAnimation;
+    Animation upAnimation;
+    Animation downAnimation;
+};
+
+class PlayerAnimations {
+public:
+    PlayerAnimations();
+
+    AnimationAllDirections& GetIdleAnimation();
+    AnimationAllDirections& GetRunAnimation();
+private:
+    AnimationAllDirections idleAnimation;
+    AnimationAllDirections runAnimation;
+};
+
 class GameAssets {
 public:
     static GameAssets& GetInstance();
@@ -16,9 +44,14 @@ public:
     void UnloadTiles();
 
     Texture2D GetTile(int index) const;
+
+    PlayerAnimations& GetPlayerAnimations();
 private:
-    std::vector<Texture2D> tiles;
     GameAssets();
+
+    std::vector<Texture2D> tiles;
+
+    PlayerAnimations playerAnimations;
 };
 
 #endif

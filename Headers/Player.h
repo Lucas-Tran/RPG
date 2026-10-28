@@ -3,6 +3,21 @@
 
 #include <Engine.h>
 
+
+#include <GameAssets.h>
+
+enum PlayerState {
+    Idle,
+    Running
+};
+
+enum PlayerDirection {
+    Up,
+    Down,
+    Left,
+    Right
+};
+
 class Player {
 public:
     static Player& GetInstance();
@@ -17,7 +32,16 @@ private:
     Player();
     Vector2 GetInputNormalized() const;
 
-    Vector2 position = {0.0f, 0.0f};
+
+    Animation& GetActiveAnimation() const;
+
+    void SetState(PlayerState newState);
+
+    void UpdateDirection(Vector2 movement);
+
+    Vector2 position;
+    PlayerState state;
+    PlayerDirection direction;
 };
 
 #endif

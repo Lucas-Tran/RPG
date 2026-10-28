@@ -1,6 +1,8 @@
 #ifndef TILES_H_INCLUDED
 #define TILES_H_INCLUDED
 
+#include "Engine.h"
+
 class Tiles {
 public:
     Tiles(const Tiles&) = delete;
@@ -13,7 +15,10 @@ public:
     short GetTile(int index) const;
     void SetTile(int index, short tile);
 
-    void Draw();
+    int GetWidth() const;
+    int GetHeight() const;
+
+    void DrawVisibleRegion(Camera2D& camera2D) const;
 
 private:
     Tiles();

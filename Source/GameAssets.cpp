@@ -1,9 +1,46 @@
 #include <GameAssets.h>
 
+std::string PLAYER_ANIMS_BASE_CLASS = "Top_Down_Adventure_Pack_v.1.0/Char_Sprites/char_";
+
+AnimationAllDirections::AnimationAllDirections(std::string prefixPath, float delay):
+leftAnimation(prefixPath + "_left_anim.gif", delay),
+rightAnimation(prefixPath + "_right_anim.gif", delay),
+upAnimation(prefixPath + "_up_anim.gif", delay),
+downAnimation(prefixPath + "_down_anim.gif", delay) {}
+
+Animation& AnimationAllDirections::GetRightAnimation() {
+    return rightAnimation;
+}
+
+Animation& AnimationAllDirections::GetLeftAnimation() {
+    return leftAnimation;
+}
+
+Animation& AnimationAllDirections::GetUpAnimation() {
+    return upAnimation;
+}
+
+Animation& AnimationAllDirections::GetDownAnimation() {
+    return downAnimation;
+}
+
+constexpr float IdleDelay = 0.15f;
+constexpr float RunDelay = 0.1f;
+PlayerAnimations::PlayerAnimations():
+idleAnimation(PLAYER_ANIMS_BASE_CLASS + "idle", IdleDelay),
+runAnimation(PLAYER_ANIMS_BASE_CLASS + "run", RunDelay) {}
+
+AnimationAllDirections& PlayerAnimations::GetIdleAnimation() {
+    return idleAnimation;
+}
+
+AnimationAllDirections& PlayerAnimations::GetRunAnimation() {
+    return runAnimation;
+}
+
 GameAssets::GameAssets() {
     LoadTileset("Top_Down_Adventure_Pack_v.1.0/Overworld_Tileset.png", 18, 13);
 }
-
 GameAssets& GameAssets::GetInstance() {
     static GameAssets instance;
     return instance;
@@ -61,4 +98,8 @@ Texture2D GameAssets::GetTile(int index) const {
         throw std::out_of_range("Tile index out of range");
     }
     return tiles[index];
+}
+
+PlayerAnimations& GameAssets::GetPlayerAnimations() {
+    return playerAnimations;
 }
