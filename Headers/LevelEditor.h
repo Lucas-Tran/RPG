@@ -20,8 +20,13 @@ public:
     bool IsEditorEnabled();
 
     bool IsMouseOffPalette();
+
+    int GetLayer();
+    bool IsOnionModeEnabled();
 private:
     LevelEditor();
+
+    void SetLayer(int layer);
 
     Texture2D outlineTexture;
     Texture2D maskTexture;
@@ -39,6 +44,8 @@ private:
     int palleteScrollY;
 
     int layer;
+
+    bool onionModeEnabled;
 };
 
 #endif

@@ -8,6 +8,8 @@
 
 #include <Input.h>
 
+#include <MapStorage.h>
+
 LevelEditor::LevelEditor() {
     Image outlineImage = LoadImage("Editor/Outline.png");
     float scaleFactor = static_cast<float>(TILE_SIZE) / 32.0f;
@@ -20,6 +22,7 @@ LevelEditor::LevelEditor() {
     UnloadImage(maskImage);
 
     editorEnabled = false;
+    onionModeEnabled = false;
 
     selectedTile = 0;
 
@@ -33,8 +36,20 @@ LevelEditor& LevelEditor::GetInstance() {
     return instance;
 }
 
+void LevelEditor::SetLayer(int layer) {
+    if (this->layer == layer) {
+        onionModeEnabled = !onionModeEnabled;
+    } else {
+        this->layer = layer;
+    }
+}
+
 void LevelEditor::Update(Camera2D camera) {
     if (IsKeyPressed(KEY_ZERO)) {
+        if (editorEnabled) {
+            SaveScene();
+            onionModeEnabled = false;
+        }
         editorEnabled = !editorEnabled;
     }
     if (!editorEnabled) {
@@ -42,13 +57,13 @@ void LevelEditor::Update(Camera2D camera) {
     }
 
     if (IsKeyPressed(KEY_ONE)) {
-        layer = 0;
+        SetLayer(0);
     }
     if (IsKeyPressed(KEY_TWO)) {
-        layer = 1;
+        SetLayer(1);
     }
     if (IsKeyPressed(KEY_THREE)) {
-        layer = 2;
+        SetLayer(2);
     }
 
     Vector2 cursorPosition = GetScreenToWorld2D(GetMousePosition(), camera);
@@ -159,6 +174,14 @@ bool LevelEditor::IsEditorEnabled() {
 
 bool LevelEditor::IsMouseOffPalette() {
     return !editorEnabled || GetMouseX() < GetScreenWidth() - PALETTE_WIDTH_PIXELS;
+}
+
+int LevelEditor::GetLayer() {
+    return layer;
+}
+
+bool LevelEditor::IsOnionModeEnabled() {
+    return onionModeEnabled;
 }
 
 #endif

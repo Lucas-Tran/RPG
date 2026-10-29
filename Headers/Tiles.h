@@ -17,6 +17,7 @@ public:
     short GetTile(int x, int y, int layer) const;
     void SetTile(int x, int y, int layer, short tile);
     int GetLayerSize() const;
+    int GetNumTiles() const;
 
     int GetWidth() const;
     int GetHeight() const;

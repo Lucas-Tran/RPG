@@ -28,7 +28,8 @@ int main() {
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
-    NewMap(Tiles::GetInstance(), 100, 100);
+    SetSceneName("over:0:0");
+    LoadScene();
 
     while (!WindowShouldClose()) {
         Input::GetInstance().Update();
@@ -65,7 +66,13 @@ int main() {
         EndDrawing();
     }
 
-    GameAssets::GetInstance().UnloadTiles();
+    SaveScene();
+
+#ifdef ENABLE_LEVEL_EDITOR
+    if (LevelEditor::GetInstance().IsEditorEnabled()) {
+        GameAssets::GetInstance().UnloadTiles();
+    }
+#endif
 
     CloseWindow();
 

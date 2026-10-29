@@ -5,7 +5,7 @@ constexpr int TILESET_WIDTH = 18;
 constexpr int TILESET_HEIGHT = 13;
 constexpr int TILESET_SIZE = TILESET_WIDTH * TILESET_HEIGHT;
 
-constexpr float PLAYER_SPEED = 300.0f;
+constexpr float PLAYER_SPEED = 160.0f;
 constexpr int TILE_SIZE = 64;
 constexpr int EMPTY_TILE = -1;
 

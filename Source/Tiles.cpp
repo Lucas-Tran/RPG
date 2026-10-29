@@ -2,6 +2,7 @@
 
 #include <Engine.h>
 #include <GameAssets.h>
+#include <LevelEditor.h>
 
 Tiles::Tiles() = default;
 
@@ -85,6 +86,8 @@ int Tiles::GetHeight() const {
 
 constexpr short BACKGROUND_TILE = 24;
 
+constexpr Color ONION_MODE_TINT = {255, 255, 255, 70};
+
 void Tiles::DrawVisibleRegion(Camera2D& camera2D, int layer) const {
     int screenWidthTiles = GetScreenWidth() / TILE_SIZE + 2;
     int screenHeightTiles = GetScreenHeight() / TILE_SIZE + 2;
@@ -97,10 +100,27 @@ void Tiles::DrawVisibleRegion(Camera2D& camera2D, int layer) const {
             float tileX = static_cast<float>(x) * TILE_SIZE;
             float tileY = static_cast<float>(y) * TILE_SIZE;
             if (layer == 0) {
+#ifdef ENABLE_LEVEL_EDITOR
+            Color tint;
+                if (LevelEditor::GetInstance().IsOnionModeEnabled()) {
+                    DrawRectangle(tileX, tileY, TILE_SIZE, TILE_SIZE, WHITE);
+                    tint = ONION_MODE_TINT;
+                } else {
+                    tint = WHITE;
+                }
+                DrawTexture(GameAssets::GetInstance().GetTile(BACKGROUND_TILE), tileX, tileY, tint);
+#else
                 DrawTexture(GameAssets::GetInstance().GetTile(BACKGROUND_TILE), tileX, tileY, WHITE);
+#endif
             }
             if (GetTile(x, y, layer) != EMPTY_TILE) {
+#ifdef ENABLE_LEVEL_EDITOR
+                Color tint = (LevelEditor::GetInstance().IsOnionModeEnabled() && layer != LevelEditor::GetInstance().GetLayer()) ? ONION_MODE_TINT : WHITE;
+                DrawTexture(GameAssets::GetInstance().GetTile(GetTile(x, y, layer)), tileX, tileY, tint);
+
+#else
                 DrawTexture(GameAssets::GetInstance().GetTile(GetTile(x, y, layer)), tileX, tileY, WHITE);
+#endif
             }
         }
     }
@@ -108,4 +128,8 @@ void Tiles::DrawVisibleRegion(Camera2D& camera2D, int layer) const {
 
 int Tiles::GetLayerSize() const {
     return width * height;
+}
+
+int Tiles::GetNumTiles() const {
+    return Tiles::GetLayerSize() * NUM_LAYERS;
 }
