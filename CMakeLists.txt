@@ -4,7 +4,6 @@ project(RPG VERSION 0.10 LANGUAGES C CXX)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 20)
 
-target_compile_definitions(RPG PRIVATE ENABLE_LEVEL_EDITOR)
 
 
 include_directories(${CMAKE_SOURCE_DIR}/Dependencies/Headers ${CMAKE_SOURCE_DIR}/Headers)
@@ -16,6 +15,8 @@ file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
 )
 
 add_executable(${CMAKE_PROJECT_NAME} ${SOURCE_FILES})
+
+target_compile_definitions(RPG PRIVATE ENABLE_LEVEL_EDITOR)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE raylib)
 

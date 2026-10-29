@@ -30,7 +30,6 @@ public:
 
 private:
     Player();
-    Vector2 GetInputNormalized() const;
 
 
     Animation& GetActiveAnimation() const;

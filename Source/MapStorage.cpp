@@ -16,7 +16,11 @@ void NewMap(Tiles& tiles, int width, int height) {
         tiles.SetTile(i, BUSH_TILE);
         i++;
         for (int k = 0; k < width - 2; k++) {
-            tiles.SetTile(i, EMPTY_TILE);
+            if (GetRandomValue(1, 10) == 1) {
+                tiles.SetTile(i, GetRandomValue(BUSH_TILE - 3, BUSH_TILE));
+            } else {
+                tiles.SetTile(i, EMPTY_TILE);
+            }
             i++;
         }
         tiles.SetTile(i, BUSH_TILE);
@@ -24,6 +28,10 @@ void NewMap(Tiles& tiles, int width, int height) {
     }
     for (int j = 0; j < width; j++) {
         tiles.SetTile(i, BUSH_TILE);
+        i++;
+    }
+    for (int j = 0; j < width * height * (NUM_LAYERS - 1); j++) {
+        tiles.SetTile(i, EMPTY_TILE);
         i++;
     }
 

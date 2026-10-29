@@ -2,6 +2,10 @@
 
 #include <Tiles.h>
 
+#include <LevelEditor.h>
+
+#include <Input.h>
+
 Player::Player() {
     position = { 200.0f, 200.0f };
     state = Idle;
@@ -50,8 +54,13 @@ Player& Player::GetInstance() {
 
 
 void Player::Update() {
-    const Vector2 movement = Vector2Scale(GetInputNormalized(), PLAYER_SPEED * GetFrameTime());
-    if (Vector2Length(movement) > 0.0f) {
+    const Vector2 movement = Vector2Scale(Input::GetInstance().GetInputNormalized(), PLAYER_SPEED * GetFrameTime());
+    bool canMove = Vector2Length(movement) > 0.0f;
+#ifdef ENABLE_LEVEL_EDITOR
+    canMove = canMove && LevelEditor::GetInstance().IsMouseOffPalette();
+#endif
+
+    if (canMove) {
         SetState(Running);
         position = Vector2Add(position, movement);
         UpdateDirection(movement);
@@ -86,7 +95,15 @@ void Player::DrawPlayer() const {
 }
 
 void Player::UpdateCamera(Camera2D& camera) const {
+    float offset = 0;
+#ifdef ENABLE_LEVEL_EDITOR
+    if (LevelEditor::GetInstance().IsEditorEnabled()) {
+        float palleteWidth = PALETTE_WIDTH_PIXELS;
+        offset = palleteWidth;
+    }
+#endif
     camera.target = position;
+    camera.target.x += offset / 2;
     float screenWidthHalf = static_cast<float>(GetScreenWidth()) / 2;
     float screenHeightHalf = static_cast<float>(GetScreenHeight()) / 2;
     if (camera.target.x < screenWidthHalf) {
@@ -95,7 +112,7 @@ void Player::UpdateCamera(Camera2D& camera) const {
     if (camera.target.y < screenHeightHalf) {
         camera.target.y = screenHeightHalf;
     }
-    float mapRightEdge = static_cast<float>(Tiles::GetInstance().GetWidth() * TILE_SIZE) - screenWidthHalf;
+    float mapRightEdge = offset + static_cast<float>(Tiles::GetInstance().GetWidth() * TILE_SIZE) - screenWidthHalf;
     if (camera.target.x > mapRightEdge) {
         camera.target.x = mapRightEdge;
     }
@@ -104,18 +121,6 @@ void Player::UpdateCamera(Camera2D& camera) const {
         camera.target.y = mapBottomEdge;
     }
 }
-
-Vector2 Player::GetInputNormalized() const {
-    const float horizontalInput = IsKeyDown(KEY_RIGHT) - IsKeyDown(KEY_LEFT);
-    const float verticalInput = IsKeyDown(KEY_DOWN) - IsKeyDown(KEY_UP);
-    Vector2 input = {
-        horizontalInput,
-        verticalInput
-    };
-    input = Vector2Normalize(input);
-    return input;
-}
-
 void Player::SetState(PlayerState newState) {
     PlayerState prevState = state;
     state = newState;

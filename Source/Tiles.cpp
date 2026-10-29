@@ -25,9 +25,8 @@ void Tiles::Init(int width, int height) {
         throw std::length_error("Map dimensions are too large");
     }
 
-    short* newMap = new short[mapWidth * mapHeight]{};
     delete[] map;
-    map = newMap;
+    map = new short[mapWidth * mapHeight * NUM_LAYERS];
     this->width = width;
     this->height = height;
 }
@@ -37,7 +36,7 @@ short Tiles::GetTile(int index) const {
         throw std::logic_error("Map has not been initialized");
     }
     if (index < 0 || static_cast<std::size_t>(index) >=
-                         static_cast<std::size_t>(width) * height) {
+                         static_cast<std::size_t>(width) * height * NUM_LAYERS) {
         throw std::out_of_range("Tile index is outside the map");
     }
     return map[index];
@@ -48,9 +47,31 @@ void Tiles::SetTile(int index, short tile) {
         throw std::logic_error("Map has not been initialized");
     }
     if (index < 0 || static_cast<std::size_t>(index) >=
-                         static_cast<std::size_t>(width) * height) {
+                         static_cast<std::size_t>(width) * height * NUM_LAYERS) {
         throw std::out_of_range("Tile index is outside the map");
     }
+    map[index] = tile;
+}
+
+short Tiles::GetTile(int x, int y, int layer) const {
+    if (map == nullptr) {
+        throw std::logic_error("Map has not been initialized");
+    }
+    if (x < 0 || x >= width || y < 0 || y >= height || layer < 0 || layer >= NUM_LAYERS) {
+        return EMPTY_TILE;
+    }
+    int index = layer * GetLayerSize() + y * width + x;
+    return map[index];
+}
+
+void Tiles::SetTile(int x, int y, int layer, short tile) {
+    if (map == nullptr) {
+        throw std::logic_error("Map has not been initialized");
+    }
+    if (x < 0 || x >= width || y < 0 || y >= height || layer < 0 || layer >= NUM_LAYERS) {
+        throw std::out_of_range("Tile coordinates or layer are outside the map");
+    }
+    int index = layer * GetLayerSize() + y * width + x;
     map[index] = tile;
 }
 
@@ -64,7 +85,7 @@ int Tiles::GetHeight() const {
 
 constexpr short BACKGROUND_TILE = 24;
 
-void Tiles::DrawVisibleRegion(Camera2D& camera2D) const {
+void Tiles::DrawVisibleRegion(Camera2D& camera2D, int layer) const {
     int screenWidthTiles = GetScreenWidth() / TILE_SIZE + 2;
     int screenHeightTiles = GetScreenHeight() / TILE_SIZE + 2;
     int drawOffsetX = -static_cast<int>(camera2D.offset.x);
@@ -73,13 +94,18 @@ void Tiles::DrawVisibleRegion(Camera2D& camera2D) const {
     int gridY = static_cast<int>(floor((camera2D.target.y + drawOffsetY) / TILE_SIZE));
     for (int y = gridY; y < gridY + screenHeightTiles; y++) {
         for (int x = gridX; x < gridX + screenWidthTiles; x++) {
-            int gridIndex = y * width + x;
             float tileX = static_cast<float>(x) * TILE_SIZE;
             float tileY = static_cast<float>(y) * TILE_SIZE;
+            if (layer == 0) {
                 DrawTexture(GameAssets::GetInstance().GetTile(BACKGROUND_TILE), tileX, tileY, WHITE);
-            if (gridIndex >= 0 && gridIndex < width * height && GetTile(gridIndex) != EMPTY_TILE) {
-                DrawTexture(GameAssets::GetInstance().GetTile(GetTile(gridIndex)), tileX, tileY, WHITE);
+            }
+            if (GetTile(x, y, layer) != EMPTY_TILE) {
+                DrawTexture(GameAssets::GetInstance().GetTile(GetTile(x, y, layer)), tileX, tileY, WHITE);
             }
         }
     }
+}
+
+int Tiles::GetLayerSize() const {
+    return width * height;
 }
