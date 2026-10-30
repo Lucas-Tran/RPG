@@ -38,6 +38,8 @@ private:
 
     void UpdateDirection(Vector2 movement);
 
+    void TryMove(Vector2 by);
+
     Vector2 position;
     PlayerState state;
     PlayerDirection direction;

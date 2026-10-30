@@ -41,15 +41,27 @@ public:
 
 
     void LoadTileset(const std::string& path, int tileset_width, int tileset_height);
-    void UnloadTiles();
+    ~GameAssets();
 
     Texture2D GetTile(int index) const;
 
     PlayerAnimations& GetPlayerAnimations();
+#ifdef ENABLE_LEVEL_EDITOR
+    void SetPin(int index, int pinNum, char pinValue);
+#endif
+    char GetPin(int index, int pinNum);
+
+#ifdef ENABLE_LEVEL_EDITOR
+    void SaveTilePins();
+#endif
 private:
     GameAssets();
 
+    void LoadTilePins(int expectedNumPins);
+
     std::vector<Texture2D> tiles;
+
+    std::vector<int> tilePins;
 
     PlayerAnimations playerAnimations;
 };

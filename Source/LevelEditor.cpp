@@ -10,6 +10,8 @@
 
 #include <MapStorage.h>
 
+#include <algorithm>
+
 LevelEditor::LevelEditor() {
     Image outlineImage = LoadImage("Editor/Outline.png");
     float scaleFactor = static_cast<float>(TILE_SIZE) / 32.0f;
@@ -23,12 +25,37 @@ LevelEditor::LevelEditor() {
 
     editorEnabled = false;
     onionModeEnabled = false;
+    pinEditorEnabled = false;
 
-    selectedTile = 0;
+    selectedPalleteIndex = 0;
 
     time = 0;
 
     layer = 0;
+
+    palleteGrid = new short[TILESET_SIZE];
+    int tileNum = 0;
+    int i = 0;
+    for (int j = 0; j < OVERWORLD_TILESET_WIDTH * OVERWORLD_TILESET_HEIGHT; j++) {
+        palleteGrid[i] = tileNum;
+        i++;
+        tileNum++;
+    }
+    for (int y = 0; y < DUNGEON_TILESET_HEIGHT; y++) {
+        for (int j = 0; j < DUNGEON_TILESET_WIDTH; j++) {
+            palleteGrid[i] = tileNum;
+            i++;
+            tileNum++;
+        }
+        for (int j = 0; j < TILESET_WIDTH - DUNGEON_TILESET_WIDTH; j++) {
+            palleteGrid[i] = EMPTY_TILE;
+            i++;
+        }
+    }
+}
+
+LevelEditor::~LevelEditor() {
+    delete[] palleteGrid;
 }
 
 LevelEditor& LevelEditor::GetInstance() {
@@ -37,6 +64,9 @@ LevelEditor& LevelEditor::GetInstance() {
 }
 
 void LevelEditor::SetLayer(int layer) {
+    if (pinEditorEnabled && !IsMouseOffPalette()) {
+        return;
+    }
     if (this->layer == layer) {
         onionModeEnabled = !onionModeEnabled;
     } else {
@@ -45,10 +75,15 @@ void LevelEditor::SetLayer(int layer) {
 }
 
 void LevelEditor::Update(Camera2D camera) {
+    if (IsKeyPressed(KEY_P)) {
+        pinEditorEnabled = !pinEditorEnabled;
+    }
     if (IsKeyPressed(KEY_ZERO)) {
         if (editorEnabled) {
             SaveScene();
+            GameAssets::GetInstance().SaveTilePins();
             onionModeEnabled = false;
+            pinEditorEnabled = false;
         }
         editorEnabled = !editorEnabled;
     }
@@ -73,19 +108,21 @@ void LevelEditor::Update(Camera2D camera) {
         cursorPositionX = static_cast<int>(floor(cursorPosition.x / TILE_SIZE));
         cursorPositionY = static_cast<int>(floor(cursorPosition.y / TILE_SIZE));
         if (IsKeyDown(KEY_SPACE)) {
-            selectedTile += cursorPositionX - prevCursorPositionX;
-            selectedTile += (cursorPositionY - prevCursorPositionY) * TILESET_WIDTH;
-            if (selectedTile < 0) {
-                selectedTile = 0;
-            } else if (selectedTile >= TILESET_SIZE) {
-                selectedTile = TILESET_SIZE - 1;
+            selectedPalleteIndex += cursorPositionX - prevCursorPositionX;
+            selectedPalleteIndex += (cursorPositionY - prevCursorPositionY) * TILESET_WIDTH;
+            if (selectedPalleteIndex < 0) {
+                selectedPalleteIndex = 0;
+            } else if (selectedPalleteIndex >= TILESET_SIZE) {
+                selectedPalleteIndex = TILESET_SIZE - 1;
             }
         }
         if (IsKeyDown(KEY_E)) {
-            selectedTile = Tiles::GetInstance().GetTile(cursorPositionX, cursorPositionY, layer);
+            short tile = Tiles::GetInstance().GetTile(cursorPositionX, cursorPositionY, layer);
+            selectedPalleteIndex = std::find(palleteGrid, palleteGrid + TILESET_SIZE, tile) - palleteGrid;
         }
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-            Tiles::GetInstance().SetTile(cursorPositionX, cursorPositionY, layer, selectedTile);
+            short tile = palleteGrid[selectedPalleteIndex];
+            Tiles::GetInstance().SetTile(cursorPositionX, cursorPositionY, layer, tile);
         }
         time = 0;
     } else {
@@ -117,12 +154,41 @@ void LevelEditor::DrawCursor() {
     }
     if (IsMouseOffPalette()) {
         Vector2 drawPosition = { static_cast<float>(cursorPositionX * TILE_SIZE), static_cast<float>(cursorPositionY * TILE_SIZE) };
-        if (selectedTile != EMPTY_TILE) {
-            DrawTextureV(GameAssets::GetInstance().GetTile(selectedTile), drawPosition, {255, 255, 255, 160});
+            short tile = palleteGrid[selectedPalleteIndex];
+        if (tile != EMPTY_TILE) {
+            DrawTextureV(GameAssets::GetInstance().GetTile(tile), drawPosition, {255, 255, 255, 160});
         }
         DrawTextureV(outlineTexture, drawPosition - Vector2{ cursorThickness, cursorThickness }, WHITE);
     } else {
 
+    }
+}
+
+
+constexpr Color PIN_OFF = {255, 255, 255, 160};
+
+void DrawPins(float x, float y, short tile) {
+    float startX = x + TILE_SIZE / 2 - COLLISION_PIN_DISTANCE;
+    float startY = y + TILE_SIZE / 2 - COLLISION_PIN_DISTANCE;
+    int pinNumber = 0;
+    y = startY;
+    for (int iy = 0; iy < PIN_COUNT_ROW; iy++) {
+        x = startX;
+        for (int ix = 0; ix < PIN_COUNT_ROW; ix++) {
+            if (Vector2Distance(GetMousePosition(), {x, y}) < COLLISION_PIN_RADIUS) {
+                if (IsKeyDown(KEY_ONE)) {
+                    GameAssets::GetInstance().SetPin(tile, pinNumber, 1);
+                }
+                if (IsKeyDown(KEY_X)) {
+                    GameAssets::GetInstance().SetPin(tile, pinNumber, 0);
+                }
+            }
+            Color pinColor = GameAssets::GetInstance().GetPin(tile, pinNumber) ? BLUE : PIN_OFF;
+            DrawCircle(x, y, COLLISION_PIN_RADIUS, pinColor);
+            pinNumber++;
+            x += COLLISION_PIN_DISTANCE;
+        }
+        y += COLLISION_PIN_DISTANCE;
     }
 }
 
@@ -144,21 +210,27 @@ void LevelEditor::DrawPallete() {
             // Calculate the tile index based on the x and y position in the palette
             int tileGridX = (x + palleteScrollX);
             int tileGridY = (y + palleteScrollY);
-            int tileIndex = tileGridY * TILESET_WIDTH + tileGridX;
+            int palleteIndex = tileGridY * TILESET_WIDTH + tileGridX;
             float tileX = startX + PADDING + x * TILE_SIZE;
             float tileY = startY + PADDING + y * TILE_SIZE;
             Rectangle box = { tileX, tileY, TILE_SIZE, TILE_SIZE };
             if (CheckCollisionPointRec(GetMousePosition(), box) && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-                selectedTile = tileIndex;
+                selectedPalleteIndex = palleteIndex;
             }
             // Check if the tile index is the selected tile
-            if (tileIndex == selectedTile) {
+            if (palleteIndex == selectedPalleteIndex) {
                 cursorX = tileX;
                 cursorY = tileY;
                 showCursor = true;
             }
             DrawTexture(maskTexture, tileX, tileY, WHITE);
-            DrawTexture(GameAssets::GetInstance().GetTile(tileIndex), tileX, tileY, WHITE);
+            short tile = palleteGrid[palleteIndex];
+            if (tile >= 0) {
+                DrawTexture(GameAssets::GetInstance().GetTile(tile), tileX, tileY, WHITE);
+            }
+            if (pinEditorEnabled) {
+                DrawPins(tileX, tileY, tile);
+            }
         }
     }
     if (showCursor) {
@@ -167,6 +239,7 @@ void LevelEditor::DrawPallete() {
 
     DrawText(("Layer: " + std::to_string(layer + 1)).c_str(), 25, 25, 50, BLACK);
 }
+
 
 bool LevelEditor::IsEditorEnabled() {
     return editorEnabled;

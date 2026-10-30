@@ -66,11 +66,10 @@ int main() {
         EndDrawing();
     }
 
-    SaveScene();
-
 #ifdef ENABLE_LEVEL_EDITOR
     if (LevelEditor::GetInstance().IsEditorEnabled()) {
-        GameAssets::GetInstance().UnloadTiles();
+        SaveScene();
+        GameAssets::GetInstance().SaveTilePins();
     }
 #endif
 

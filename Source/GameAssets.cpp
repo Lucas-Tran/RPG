@@ -1,5 +1,7 @@
 #include <GameAssets.h>
 
+#include <fstream>
+
 std::string PLAYER_ANIMS_BASE_CLASS = "Top_Down_Adventure_Pack_v.1.0/Char_Sprites/char_";
 
 AnimationAllDirections::AnimationAllDirections(std::string prefixPath, float delay):
@@ -39,7 +41,9 @@ AnimationAllDirections& PlayerAnimations::GetRunAnimation() {
 }
 
 GameAssets::GameAssets() {
-    LoadTileset("Top_Down_Adventure_Pack_v.1.0/Overworld_Tileset.png", 18, 13);
+    LoadTileset("Top_Down_Adventure_Pack_v.1.0/Overworld_Tileset.png", OVERWORLD_TILESET_WIDTH, OVERWORLD_TILESET_HEIGHT);
+    LoadTileset("Top_Down_Adventure_Pack_v.1.0/Dungeon_Tileset.png", DUNGEON_TILESET_WIDTH, DUNGEON_TILESET_HEIGHT);
+    LoadTilePins(TOTAL_TILES);
 }
 GameAssets& GameAssets::GetInstance() {
     static GameAssets instance;
@@ -86,7 +90,7 @@ void GameAssets::LoadTileset(const std::string& path, int tileset_width, int til
     UnloadImage(tileset);
 }
 
-void GameAssets::UnloadTiles() {
+GameAssets::~GameAssets() {
     for (Texture2D& tile : tiles) {
         UnloadTexture(tile);
     }
@@ -102,4 +106,50 @@ Texture2D GameAssets::GetTile(int index) const {
 
 PlayerAnimations& GameAssets::GetPlayerAnimations() {
     return playerAnimations;
+}
+
+constexpr int DATA_PER_PIN = 3;
+#ifdef ENABLE_LEVEL_EDITOR
+void GameAssets::SetPin(int index, int pinNum, char pinValue) {
+    if (index >= 0) {
+        int binIndex = pinNum * DATA_PER_PIN;
+        tilePins[index] = (tilePins[index] & ~(7 << binIndex)) | (pinValue << binIndex);
+    }
+}
+
+void GameAssets::SaveTilePins() {
+    std::ofstream writer("TilePins.rpgpins");
+    int numPins = tilePins.size();
+    writer.write(reinterpret_cast<char*>(&numPins), sizeof(int));
+    writer.write(reinterpret_cast<char*>(tilePins.data()), sizeof(int) * numPins);
+    writer.close();
+}
+#endif
+
+char GameAssets::GetPin(int index, int pinNum) {
+    if (index < 0) {
+        return false;
+    }
+    return (tilePins[index] >> pinNum * DATA_PER_PIN) & 7;
+}
+
+void GameAssets::LoadTilePins(int expectedNumPins) {
+    std::ifstream reader("TilePins.rpgpins");
+    tilePins.reserve(expectedNumPins);
+
+    int numPins = 0;
+    if (reader.is_open()) {
+        reader.read(reinterpret_cast<char*>(&numPins), sizeof(int));
+        for (int i = 0; i < numPins; i++) {
+            int pinData;
+            reader.read(reinterpret_cast<char*>(&pinData), sizeof(int));
+            tilePins.push_back(pinData);
+        }
+        reader.close();
+    }
+    if (expectedNumPins > numPins) {
+        for (int i = 0; i < expectedNumPins - numPins; i++) {
+            tilePins.push_back(0);
+        }
+    }
 }

@@ -6,6 +6,8 @@
 
 #include <Input.h>
 
+#include <algorithm>
+
 Player::Player() {
     position = { 200.0f, 200.0f };
     state = Idle;
@@ -62,7 +64,7 @@ void Player::Update() {
 
     if (canMove) {
         SetState(Running);
-        position = Vector2Add(position, movement);
+        TryMove(movement);
         UpdateDirection(movement);
     } else {
         SetState(Idle);
@@ -126,5 +128,61 @@ void Player::SetState(PlayerState newState) {
     state = newState;
     if (state != prevState) {
         GetActiveAnimation().Reset();
+    }
+}
+
+char GetSolidAtTile(Rectangle rect, int tileX, int tileY, int layer) {
+    char solid = 0;
+    short tile = Tiles::GetInstance().GetTile(tileX, tileY, layer);
+    int pinNum = 0;
+    for (int y = 0; y < PIN_COUNT_ROW; y++) {
+        for (int x = 0; x < PIN_COUNT_ROW; x++) {
+            float pointX = static_cast<float>(tileX) * TILE_SIZE;
+            pointX += static_cast<float>(x) * TILE_SIZE / 2;
+            float pointY = static_cast<float>(tileY) * TILE_SIZE;
+            pointY += static_cast<float>(y) * TILE_SIZE / 2;
+            if (CheckCollisionPointRec({pointX, pointY}, rect)) {
+                char pinValue = GameAssets::GetInstance().GetPin(tile, pinNum);
+                solid = std::max(solid, pinValue);
+            }
+            pinNum++;
+        }
+    }
+    return solid;
+}
+
+char CheckSolidAllAround(float x, float y, int layer) {
+    Rectangle rect = {x - PLAYER_WIDTH_HALF, y - PLAYER_HEIGHT_HALF * 2, PLAYER_WIDTH_HALF * 2, PLAYER_HEIGHT_HALF * 2};
+    int tileX = static_cast<int>(floor((x - PLAYER_WIDTH_HALF) / TILE_SIZE));
+    int tileY = static_cast<int>(floor(y / TILE_SIZE));
+    char solid = 0;
+    solid = std::max(solid, GetSolidAtTile(rect, tileX, tileY, layer));
+    solid = std::max(solid, GetSolidAtTile(rect, tileX + 1, tileY, layer));
+    solid = std::max(solid, GetSolidAtTile(rect, tileX, tileY - 1, layer));
+    solid = std::max(solid, GetSolidAtTile(rect, tileX + 1, tileY - 1, layer));
+    return solid;
+}
+
+char GetSolid(float x, float y) {
+    char solid = 0;
+    for (int layer = 0; layer < NUM_LAYERS; layer++) {
+        solid = std::max(solid, CheckSolidAllAround(x, y, layer));
+    }
+    return solid;
+}
+
+void Player::TryMove(Vector2 by) {
+#ifdef ENABLE_LEVEL_EDITOR
+    if (LevelEditor::GetInstance().IsEditorEnabled()) {
+        constexpr float GOD_SPEED_SCALE = 2;
+        position += GOD_SPEED_SCALE * by;
+        return;
+    }
+#endif
+    if (GetSolid(position.x + by.x, position.y) != 1) {
+        position.x += by.x;
+    }
+    if (GetSolid(position.x, position.y + by.y) != 1) {
+        position.y += by.y;
     }
 }

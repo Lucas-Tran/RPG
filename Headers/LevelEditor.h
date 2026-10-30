@@ -12,6 +12,8 @@ public:
     LevelEditor(const LevelEditor&) = delete;
     LevelEditor& operator=(const LevelEditor&) = delete;
 
+    ~LevelEditor();
+
     void Update(Camera2D camera);
 
     void DrawCursor();
@@ -28,13 +30,15 @@ private:
 
     void SetLayer(int layer);
 
+    short* palleteGrid;
+
     Texture2D outlineTexture;
     Texture2D maskTexture;
 
     int cursorPositionX;
     int cursorPositionY;
 
-    short selectedTile;
+    short selectedPalleteIndex;
 
     bool editorEnabled;
 
@@ -46,6 +50,7 @@ private:
     int layer;
 
     bool onionModeEnabled;
+    bool pinEditorEnabled;
 };
 
 #endif

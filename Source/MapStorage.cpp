@@ -47,7 +47,7 @@ void NewMap(int width, int height) {
         tiles.SetTile(i, BUSH_TILE);
         i++;
     }
-    for (int j = 0; j < width * height * (NUM_LAYERS - 1); j++) {
+    for (int j = 0; j < Tiles::GetInstance().GetLayerSize() * (NUM_LAYERS - 1); j++) {
         tiles.SetTile(i, EMPTY_TILE);
         i++;
     }
