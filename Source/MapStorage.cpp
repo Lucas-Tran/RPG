@@ -119,7 +119,7 @@ void LoadTilemap(std::ifstream& reader) {
 void LoadScene() {
     std::ifstream reader("Scenes/" + sceneName + ".rpgscene");
     if (!reader.is_open()) {
-        NewMap(100, 100);
+        NewMap(DEFAULT_MAP_SIZE, DEFAULT_MAP_SIZE);
         return;
     }
     if (ReadValueS(reader) != "RPG") {

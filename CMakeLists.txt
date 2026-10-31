@@ -19,6 +19,7 @@ add_executable(${CMAKE_PROJECT_NAME} ${SOURCE_FILES})
 
 target_compile_definitions(RPG PRIVATE ENABLE_LEVEL_EDITOR)
 
+
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE raylib)
 
 if(WIN32)

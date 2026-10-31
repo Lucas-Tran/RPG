@@ -21,17 +21,19 @@ int main() {
 
     SetTargetFPS(60);
 
-    SetRandomSeed(42);
+    SetRandomSeed(30);
 
     Camera2D camera;
     camera.target = { 0.0f, 0.0f };
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
-    SetSceneName("over:0:0");
+    SetSceneName("over_0_0");
     LoadScene();
 
     while (!WindowShouldClose()) {
+        GameManager::GetInstance().CheckAndDoCutscenes();
+
         Input::GetInstance().Update();
         Player::GetInstance().Update();
         Player::GetInstance().UpdateCamera(camera);
@@ -68,8 +70,7 @@ int main() {
 
 #ifdef ENABLE_LEVEL_EDITOR
     if (LevelEditor::GetInstance().IsEditorEnabled()) {
-        SaveScene();
-        GameAssets::GetInstance().SaveTilePins();
+        LevelEditor::GetInstance().TurnEditorOff();
     }
 #endif
 

@@ -7,6 +7,9 @@
 #include <Input.h>
 
 #include <algorithm>
+#include <sstream>
+
+#include "MapStorage.h"
 
 Player::Player() {
     position = { 200.0f, 200.0f };
@@ -70,6 +73,7 @@ void Player::Update() {
         SetState(Idle);
     }
     GetActiveAnimation().Update(GetFrameTime());
+    CheckOutOfBounds();
 }
 
 
@@ -184,5 +188,58 @@ void Player::TryMove(Vector2 by) {
     }
     if (GetSolid(position.x, position.y + by.y) != 1) {
         position.y += by.y;
+    }
+}
+
+void Player::ChangeScene(Vector2 newPosition, int changeSceneX, int changeSceneY) {
+#ifdef ENABLE_LEVEL_EDITOR
+    if (LevelEditor::GetInstance().IsEditorEnabled()) {
+        SaveScene();
+    }
+#endif
+    std::stringstream stream;
+    stream.str(GetSceneName());
+    std::string enviornmentType;
+    int sceneX, sceneY;
+    getline(stream, enviornmentType, '_');
+
+    char tmp;
+
+    stream >> sceneX >> tmp >> sceneY;
+
+    sceneX += changeSceneX;
+    sceneY += changeSceneY;
+
+
+    stream.str("");
+    stream.clear();
+
+    stream << enviornmentType << '_' << sceneX << '_' << sceneY;
+    SetSceneName(stream.str());
+
+    auto sceneTransition = [this, newPosition]() {
+        LoadScene();
+        position = newPosition;
+    };
+
+    GameManager::GetInstance().SetCutsceneFunction(sceneTransition);
+}
+
+void Player::CheckOutOfBounds() {
+    float LEFT_EDGE = PLAYER_WIDTH_HALF;
+    float RIGHT_EDGE = Tiles::GetInstance().GetWidth() * TILE_SIZE - PLAYER_WIDTH_HALF;
+    float TOP_EDGE = PLAYER_HEIGHT_HALF;
+    float BOTTOM_EDGE = Tiles::GetInstance().GetHeight() * TILE_SIZE;
+    if (position.x < LEFT_EDGE) {
+        ChangeScene({RIGHT_EDGE, position.y}, -1, 0);
+    }
+    if (position.y < TOP_EDGE) {
+        ChangeScene({position.x, BOTTOM_EDGE}, 0, -1);
+    }
+    if (position.x > RIGHT_EDGE) {
+        ChangeScene({LEFT_EDGE, position.y}, 1, 0);
+    }
+    if (position.y > BOTTOM_EDGE) {
+        ChangeScene({position.x, TOP_EDGE}, 0, 1);
     }
 }
