@@ -1,6 +1,10 @@
 #include <GameAssets.h>
 
+#include <filesystem>
 #include <fstream>
+#include <thread>
+
+namespace fs = std::filesystem;
 
 std::string PLAYER_ANIMS_BASE_CLASS = "Top_Down_Adventure_Pack_v.1.0/Char_Sprites/char_";
 
@@ -26,11 +30,9 @@ Animation& AnimationAllDirections::GetDownAnimation() {
     return downAnimation;
 }
 
-constexpr float IdleDelay = 0.15f;
-constexpr float RunDelay = 0.1f;
 PlayerAnimations::PlayerAnimations():
-idleAnimation(PLAYER_ANIMS_BASE_CLASS + "idle", IdleDelay),
-runAnimation(PLAYER_ANIMS_BASE_CLASS + "run", RunDelay) {}
+idleAnimation(PLAYER_ANIMS_BASE_CLASS + "idle", PLAYER_IDLE_ANIM_DELAY),
+runAnimation(PLAYER_ANIMS_BASE_CLASS + "run", PLAYER_RUN_ANIM_DELAY) {}
 
 AnimationAllDirections& PlayerAnimations::GetIdleAnimation() {
     return idleAnimation;
@@ -41,13 +43,26 @@ AnimationAllDirections& PlayerAnimations::GetRunAnimation() {
 }
 
 GameAssets::GameAssets() {
-    LoadTileset("Top_Down_Adventure_Pack_v.1.0/Overworld_Tileset.png", OVERWORLD_TILESET_WIDTH, OVERWORLD_TILESET_HEIGHT);
-    LoadTileset("Top_Down_Adventure_Pack_v.1.0/Dungeon_Tileset.png", DUNGEON_TILESET_WIDTH, DUNGEON_TILESET_HEIGHT);
     LoadTilePins(TOTAL_TILES);
+    tiles.reserve(TOTAL_TILES);
+    LoadTileset("Top_Down_Adventure_Pack_v.1.0/Overworld_Tileset.png", OVERWORLD_TILESET_WIDTH, OVERWORLD_TILESET_HEIGHT);
+    LoadAnimatedTileDirectory("Top_Down_Adventure_Pack_v.1.0/Tiles_(animated)/Overworld");
+    LoadTileset("Top_Down_Adventure_Pack_v.1.0/Dungeon_Tileset.png", DUNGEON_TILESET_WIDTH, DUNGEON_TILESET_HEIGHT);
+    LoadAnimatedTileDirectory("Top_Down_Adventure_Pack_v.1.0/Tiles_(animated)/Dungeon");
 }
 GameAssets& GameAssets::GetInstance() {
     static GameAssets instance;
     return instance;
+}
+
+
+void GameAssets::LoadAnimatedTileDirectory(std::string directory) {
+    fs::path gifPath = directory;
+    for (const auto& entry : fs::directory_iterator(gifPath)) {
+        if (entry.path().extension() == ".gif") {
+            AddAnimatedTile(entry.path().string(), TILE_ANIMATE_DELAY);
+        }
+    }
 }
 
 
@@ -62,8 +77,6 @@ void GameAssets::LoadTileset(const std::string& path, int tileset_width, int til
     }
 
     constexpr int TILE_SIZE_SOURCE = 16;
-
-    tiles.reserve(static_cast<std::size_t>(tileset_width) * tileset_height);
 
     for (int y = 0; y < tileset.height / TILE_SIZE_SOURCE; y++) {
         for (int x = 0; x < tileset.width / TILE_SIZE_SOURCE; x++) {
@@ -90,18 +103,28 @@ void GameAssets::LoadTileset(const std::string& path, int tileset_width, int til
     UnloadImage(tileset);
 }
 
+void GameAssets::AddAnimatedTile(std::string path, float frameDelay) {
+    short tile = static_cast<short>(tiles.size());
+    tileAnimations.try_emplace(tile, path, frameDelay);
+    tiles.push_back(tileAnimations.at(tile).GetFirstFrame());
+    MarkAnimateFlag(tile);
+}
+
 GameAssets::~GameAssets() {
-    for (Texture2D& tile : tiles) {
-        UnloadTexture(tile);
+    for (int tile = 0; tile < TOTAL_TILES; tile++) {
+        if (IsTileAnimates(tile)) {
+            continue;
+        }
+        UnloadTexture(tiles[tile]);
     }
     tiles.clear();
 }
 
-Texture2D GameAssets::GetTile(int index) const {
-    if (index < 0 || index >= static_cast<int>(tiles.size())) {
+Texture2D GameAssets::GetTile(short tile) const {
+    if (tile < 0 || tile >= static_cast<int>(tiles.size())) {
         throw std::out_of_range("Tile index out of range");
     }
-    return tiles[index];
+    return tiles[tile];
 }
 
 PlayerAnimations& GameAssets::GetPlayerAnimations() {
@@ -110,10 +133,10 @@ PlayerAnimations& GameAssets::GetPlayerAnimations() {
 
 constexpr int DATA_PER_PIN = 3;
 #ifdef ENABLE_LEVEL_EDITOR
-void GameAssets::SetPin(int index, int pinNum, char pinValue) {
-    if (index >= 0) {
+void GameAssets::SetPin(short tile, int pinNum, char pinValue) {
+    if (tile >= 0) {
         int binIndex = pinNum * DATA_PER_PIN;
-        tilePins[index] = (tilePins[index] & ~(7 << binIndex)) | (pinValue << binIndex);
+        tilePins[tile] = (tilePins[tile] & ~(7 << binIndex)) | (pinValue << binIndex);
     }
 }
 
@@ -126,14 +149,14 @@ void GameAssets::SaveTilePins() {
 }
 #endif
 
-char GameAssets::GetPin(int index, int pinNum) {
-    if (index < 0) {
+char GameAssets::GetPin(short tile, int pinNum) {
+    if (tile < 0) {
         return false;
     }
-    return (tilePins[index] >> pinNum * DATA_PER_PIN) & 7;
+    return (tilePins[tile] >> pinNum * DATA_PER_PIN) & 7;
 }
 
-void GameAssets::LoadTilePins(int expectedNumPins) {
+void GameAssets::LoadTilePins(short expectedNumPins) {
     std::ifstream reader("TilePins.rpgpins");
     tilePins.reserve(expectedNumPins);
 
@@ -152,4 +175,16 @@ void GameAssets::LoadTilePins(int expectedNumPins) {
             tilePins.push_back(0);
         }
     }
+}
+
+void GameAssets::MarkAnimateFlag(short index) {
+    tilePins[index] |= ANIMATION_FLAG;
+}
+
+bool GameAssets::IsTileAnimates(short index) {
+    return (tilePins[index] & ANIMATION_FLAG) != 0;
+}
+
+Animation& GameAssets::GetAnimation(short tile) {
+    return tileAnimations.at(tile);
 }

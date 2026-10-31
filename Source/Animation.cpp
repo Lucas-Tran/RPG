@@ -2,7 +2,7 @@
 
 
 Animation::Animation(std::string path, float frameDelay):
-frameDelay(frameDelay), timer(0) {
+frameDelay(frameDelay) {
     Image gifImage = LoadImageAnim(path.c_str(), &totalAnimationFrames);
      if (gifImage.data == nullptr) {
          throw std::runtime_error("Failed to load GIF image:" + path);
@@ -48,15 +48,15 @@ Animation::~Animation() {
     delete[] frames;
 }
 
-void Animation::Reset() {
-    timer = 0;
+Texture2D Animation::GetFirstFrame() {
+    return frames[0];
 }
 
-void Animation::Update(float deltaTime) {
-    timer += deltaTime;
+void Animation::Draw(Vector2 position, float animTime) {
+    Draw(position, animTime, WHITE);
 }
 
-void Animation::Draw(Vector2 position) {
-    int currentFrame = static_cast<int>(timer / frameDelay) % totalAnimationFrames;
-    DrawTextureV(frames[currentFrame], position, WHITE);
+void Animation::Draw(Vector2 position, float animTime, Color tint) {
+    int currentFrame = static_cast<int>(animTime / frameDelay) % totalAnimationFrames;
+    DrawTextureV(frames[currentFrame], position, tint);
 }

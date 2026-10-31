@@ -5,6 +5,8 @@
 
 #include <Animation.h>
 
+#include <map>
+
 class AnimationAllDirections {
 public:
     AnimationAllDirections(std::string prefixPath, float delay);
@@ -43,23 +45,30 @@ public:
     void LoadTileset(const std::string& path, int tileset_width, int tileset_height);
     ~GameAssets();
 
-    Texture2D GetTile(int index) const;
+    Texture2D GetTile(short tile) const;
 
     PlayerAnimations& GetPlayerAnimations();
 #ifdef ENABLE_LEVEL_EDITOR
-    void SetPin(int index, int pinNum, char pinValue);
+    void SetPin(short tile, int pinNum, char pinValue);
 #endif
-    char GetPin(int index, int pinNum);
+    char GetPin(short tile, int pinNum);
 
+    bool IsTileAnimates(short index);
 #ifdef ENABLE_LEVEL_EDITOR
     void SaveTilePins();
 #endif
+    Animation& GetAnimation(short tile);
 private:
     GameAssets();
 
-    void LoadTilePins(int expectedNumPins);
+    void LoadTilePins(short expectedNumPins);
+    void MarkAnimateFlag(short index);
+    void AddAnimatedTile(std::string path, float frameDelay);
+
+    void LoadAnimatedTileDirectory(std::string directory);
 
     std::vector<Texture2D> tiles;
+    std::unordered_map<short, Animation> tileAnimations;
 
     std::vector<int> tilePins;
 

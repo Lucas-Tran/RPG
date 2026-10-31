@@ -12,6 +12,7 @@
 #include "MapStorage.h"
 
 Player::Player() {
+    animTime = 0;
     position = { 200.0f, 200.0f };
     state = Idle;
     direction = Right;
@@ -72,7 +73,7 @@ void Player::Update() {
     } else {
         SetState(Idle);
     }
-    GetActiveAnimation().Update(GetFrameTime());
+    animTime += GetFrameTime();
     CheckOutOfBounds();
 }
 
@@ -97,7 +98,7 @@ void Player::UpdateDirection(Vector2 movement) {
 }
 
 void Player::DrawPlayer() const {
-    GetActiveAnimation().Draw(Vector2Add(position, { -TILE_SIZE / 2.0f, -TILE_SIZE }));
+    GetActiveAnimation().Draw(Vector2Add(position, { -TILE_SIZE / 2.0f, -TILE_SIZE }), animTime);
 }
 
 void Player::UpdateCamera(Camera2D& camera) const {
@@ -131,7 +132,7 @@ void Player::SetState(PlayerState newState) {
     PlayerState prevState = state;
     state = newState;
     if (state != prevState) {
-        GetActiveAnimation().Reset();
+        animTime = 0;
     }
 }
 

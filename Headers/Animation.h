@@ -9,15 +9,13 @@ public:
 
     ~Animation();
 
-    void Reset();
+    void Draw(Vector2 position, float animTime);
 
-    void Update(float deltaTime);
+    void Draw(Vector2 position, float animTime, Color tint);
 
-    void Draw(Vector2 position);
+    Texture2D GetFirstFrame();
 private:
     int totalAnimationFrames;
-
-    float timer;
     float frameDelay;
 
     Texture2D* frames;

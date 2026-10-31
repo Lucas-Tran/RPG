@@ -46,6 +46,8 @@ private:
     Vector2 position;
     PlayerState state;
     PlayerDirection direction;
+
+    float animTime;
 };
 
 #endif

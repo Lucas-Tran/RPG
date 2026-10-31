@@ -14,7 +14,7 @@ int main() {
 #ifdef ENABLE_LEVEL_EDITOR
     constexpr int screenHeight = 720;
 #else
-    constexpr int screenHeight = 450;
+    constexpr int screenHeight = 600;
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 #endif
     InitWindow(screenWidth, screenHeight, "RPG - Raylib Window");
@@ -46,19 +46,13 @@ int main() {
         BeginDrawing();
 
         BeginMode2D(camera);
-
         Tiles::GetInstance().DrawVisibleRegion(camera, 0);
-
         Tiles::GetInstance().DrawVisibleRegion(camera, 1);
-
         Player::GetInstance().DrawPlayer();
-
         Tiles::GetInstance().DrawVisibleRegion(camera, 2);
-
 #ifdef ENABLE_LEVEL_EDITOR
         LevelEditor::GetInstance().DrawCursor();
 #endif
-
         EndMode2D();
 
 #ifdef ENABLE_LEVEL_EDITOR

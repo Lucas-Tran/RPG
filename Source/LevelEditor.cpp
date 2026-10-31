@@ -42,15 +42,31 @@ void LevelEditor::LoadImages() {
     UnloadImage(tempImage);
 }
 
+void InitializePalleteGridAnimTiles(short* palleteGrid, int& i, short& tileNum, int numAnimatingTiles) {
+    for (int j = 0; j < numAnimatingTiles; j++) {
+        palleteGrid[i] = tileNum;
+        i++;
+        tileNum++;
+    }
+    int padding = (TILESET_WIDTH - (numAnimatingTiles % TILESET_WIDTH)) % TILESET_WIDTH;
+    for (int j = 0; j < padding; j++) {
+        palleteGrid[i] = EMPTY_TILE;
+        i++;
+    }
+}
+
 void LevelEditor::InitializePalleteGrid() {
     palleteGrid = new short[TILESET_SIZE];
-    int tileNum = 0;
+    short tileNum = 0;
     int i = 0;
     for (int j = 0; j < OVERWORLD_TILESET_WIDTH * OVERWORLD_TILESET_HEIGHT; j++) {
         palleteGrid[i] = tileNum;
         i++;
         tileNum++;
     }
+
+    InitializePalleteGridAnimTiles(palleteGrid, i, tileNum, NUM_OVERWORLD_ANIMATING_TILES);
+
     for (int y = 0; y < DUNGEON_TILESET_HEIGHT; y++) {
         for (int j = 0; j < DUNGEON_TILESET_WIDTH; j++) {
             palleteGrid[i] = tileNum;
@@ -61,6 +77,11 @@ void LevelEditor::InitializePalleteGrid() {
             palleteGrid[i] = EMPTY_TILE;
             i++;
         }
+    }
+    InitializePalleteGridAnimTiles(palleteGrid, i, tileNum, NUM_DUNGEON_ANIMATING_TILES);
+    while (i < TILESET_SIZE) {
+        palleteGrid[i] = EMPTY_TILE;
+        i++;
     }
 }
 

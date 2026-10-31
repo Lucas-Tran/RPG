@@ -113,13 +113,21 @@ void Tiles::DrawVisibleRegion(Camera2D& camera2D, int layer) const {
                 DrawTexture(GameAssets::GetInstance().GetTile(BACKGROUND_TILE), tileX, tileY, WHITE);
 #endif
             }
-            if (GetTile(x, y, layer) != EMPTY_TILE) {
+            short tile = GetTile(x, y, layer);
+            if (tile != EMPTY_TILE) {
 #ifdef ENABLE_LEVEL_EDITOR
                 Color tint = (LevelEditor::GetInstance().IsOnionModeEnabled() && layer != LevelEditor::GetInstance().GetLayer()) ? ONION_MODE_TINT : WHITE;
-                DrawTexture(GameAssets::GetInstance().GetTile(GetTile(x, y, layer)), tileX, tileY, tint);
-
+                if (GameAssets::GetInstance().IsTileAnimates(tile)) {
+                    GameAssets::GetInstance().GetAnimation(tile).Draw({tileX, tileY}, static_cast<float>(GetTime()), tint);
+                } else {
+                    DrawTexture(GameAssets::GetInstance().GetTile(tile), tileX, tileY, tint);
+                }
 #else
-                DrawTexture(GameAssets::GetInstance().GetTile(GetTile(x, y, layer)), tileX, tileY, WHITE);
+                if (GameAssets::GetInstance().IsTileAnimates(tile)) {
+                    GameAssets::GetInstance().GetAnimation(tile).Draw({tileX, tileY}, static_cast<float>(GetTime()));
+                } else {
+                    DrawTexture(GameAssets::GetInstance().GetTile(tile), tileX, tileY, WHITE);
+                }
 #endif
             }
         }
