@@ -2,11 +2,11 @@
 
 #include <filesystem>
 #include <fstream>
-#include <thread>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 
-std::string PLAYER_ANIMS_BASE_CLASS = "Top_Down_Adventure_Pack_v.1.0/Char_Sprites/char_";
+std::string PLAYER_ANIMS_BASE_FOLDER = "Top_Down_Adventure_Pack_v.1.0/Char_Sprites/char_";
 
 AnimationAllDirections::AnimationAllDirections(std::string prefixPath, float delay):
 leftAnimation(prefixPath + "_left_anim.gif", delay),
@@ -31,8 +31,11 @@ Animation& AnimationAllDirections::GetDownAnimation() {
 }
 
 PlayerAnimations::PlayerAnimations():
-idleAnimation(PLAYER_ANIMS_BASE_CLASS + "idle", PLAYER_IDLE_ANIM_DELAY),
-runAnimation(PLAYER_ANIMS_BASE_CLASS + "run", PLAYER_RUN_ANIM_DELAY) {}
+idleAnimation(PLAYER_ANIMS_BASE_FOLDER + "idle", PLAYER_IDLE_ANIM_DELAY),
+runAnimation(PLAYER_ANIMS_BASE_FOLDER + "run", PLAYER_RUN_ANIM_DELAY),
+climbUpAnimation(PLAYER_ANIMS_BASE_FOLDER + "climbing_up_anim.gif", PLAYER_CLIMB_ANIM_DELAY),
+climbDownAnimation(PLAYER_ANIMS_BASE_FOLDER + "climbing_down_anim.gif", PLAYER_CLIMB_ANIM_DELAY)
+{}
 
 AnimationAllDirections& PlayerAnimations::GetIdleAnimation() {
     return idleAnimation;
@@ -40,6 +43,14 @@ AnimationAllDirections& PlayerAnimations::GetIdleAnimation() {
 
 AnimationAllDirections& PlayerAnimations::GetRunAnimation() {
     return runAnimation;
+}
+
+Animation& PlayerAnimations::GetClimbUpAnimation() {
+    return climbUpAnimation;
+}
+
+Animation& PlayerAnimations::GetClimbDownAnimation() {
+    return climbDownAnimation;
 }
 
 GameAssets::GameAssets() {
@@ -58,13 +69,22 @@ GameAssets& GameAssets::GetInstance() {
 
 void GameAssets::LoadAnimatedTileDirectory(std::string directory) {
     fs::path gifPath = directory;
+    std::vector<std::string> files;
     for (const auto& entry : fs::directory_iterator(gifPath)) {
         if (entry.path().extension() == ".gif") {
-            AddAnimatedTile(entry.path().string(), TILE_ANIMATE_DELAY);
+            files.push_back(entry.path().filename().string());
         }
+    }
+    std::sort(files.begin(), files.end());
+    for (std::string file : files) {
+        std::string filePath = directory;
+        filePath += "/";
+        filePath += file;
+        LoadAnimatedTile(filePath, TILE_ANIMATE_DELAY, file[0] - '0', file[2] - '0');
     }
 }
 
+constexpr int TILE_SIZE_SOURCE = 16;
 
 void GameAssets::LoadTileset(const std::string& path, int tileset_width, int tileset_height) {
     if (tileset_width <= 0 || tileset_height <= 0) {
@@ -76,7 +96,6 @@ void GameAssets::LoadTileset(const std::string& path, int tileset_width, int til
         throw std::runtime_error("Failed to load tileset image: " + path);
     }
 
-    constexpr int TILE_SIZE_SOURCE = 16;
 
     for (int y = 0; y < tileset.height / TILE_SIZE_SOURCE; y++) {
         for (int x = 0; x < tileset.width / TILE_SIZE_SOURCE; x++) {
@@ -103,11 +122,23 @@ void GameAssets::LoadTileset(const std::string& path, int tileset_width, int til
     UnloadImage(tileset);
 }
 
-void GameAssets::AddAnimatedTile(std::string path, float frameDelay) {
+void GameAssets::LoadAnimatedTile(std::string path, float frameDelay, int width, int height) {
     short tile = static_cast<short>(tiles.size());
-    tileAnimations.try_emplace(tile, path, frameDelay);
-    tiles.push_back(tileAnimations.at(tile).GetFirstFrame());
-    MarkAnimateFlag(tile);
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            Rectangle tileBounds = {
+                static_cast<float>(x * TILE_SIZE_SOURCE),
+                static_cast<float>(y * TILE_SIZE_SOURCE),
+                static_cast<float>(TILE_SIZE_SOURCE),
+                static_cast<float>(TILE_SIZE_SOURCE)
+            };
+            tileAnimations.try_emplace(tile, path, tileBounds, frameDelay);
+            tiles.push_back(tileAnimations.at(tile).GetFirstFrame());
+            MarkAnimateFlag(tile);
+            tile++;
+        }
+    }
+
 }
 
 GameAssets::~GameAssets() {

@@ -57,6 +57,7 @@ int main() {
 
 #ifdef ENABLE_LEVEL_EDITOR
         LevelEditor::GetInstance().DrawPallete();
+        LevelEditor::GetInstance().DrawTextInfo();
 #endif
 
         EndDrawing();

@@ -29,6 +29,12 @@ Animation& Player::GetActiveAnimation() const {
             animationAllDirections = &GameAssets::GetInstance().GetPlayerAnimations().GetRunAnimation();
             break;
         }
+        case ClimbingUp: {
+            return GameAssets::GetInstance().GetPlayerAnimations().GetClimbUpAnimation();
+        }
+        case ClimbingDown: {
+            return GameAssets::GetInstance().GetPlayerAnimations().GetClimbDownAnimation();
+        }
         default: {
             animationAllDirections = &GameAssets::GetInstance().GetPlayerAnimations().GetIdleAnimation();
             break;
@@ -67,13 +73,16 @@ void Player::Update() {
 #endif
 
     if (canMove) {
-        SetState(Running);
         TryMove(movement);
         UpdateDirection(movement);
     } else {
-        SetState(Idle);
+        if (!IsClimbing()) {
+            SetState(Idle);
+        }
     }
-    animTime += GetFrameTime();
+    if (!IsClimbing()) {
+        animTime += GetFrameTime();
+    }
     CheckOutOfBounds();
 }
 
@@ -104,7 +113,7 @@ void Player::DrawPlayer() const {
 void Player::UpdateCamera(Camera2D& camera) const {
     float offset = 0;
 #ifdef ENABLE_LEVEL_EDITOR
-    if (LevelEditor::GetInstance().IsEditorEnabled()) {
+    if (LevelEditor::GetInstance().IsPalleteOnly()) {
         float palleteWidth = PALETTE_WIDTH_PIXELS;
         offset = palleteWidth;
     }
@@ -136,9 +145,8 @@ void Player::SetState(PlayerState newState) {
     }
 }
 
-char GetSolidAtTile(Rectangle rect, int tileX, int tileY, int layer) {
+char GetSolidAtTile(Rectangle rect, int tileX, int tileY) {
     char solid = 0;
-    short tile = Tiles::GetInstance().GetTile(tileX, tileY, layer);
     int pinNum = 0;
     for (int y = 0; y < PIN_COUNT_ROW; y++) {
         for (int x = 0; x < PIN_COUNT_ROW; x++) {
@@ -147,8 +155,17 @@ char GetSolidAtTile(Rectangle rect, int tileX, int tileY, int layer) {
             float pointY = static_cast<float>(tileY) * TILE_SIZE;
             pointY += static_cast<float>(y) * TILE_SIZE / 2;
             if (CheckCollisionPointRec({pointX, pointY}, rect)) {
-                char pinValue = GameAssets::GetInstance().GetPin(tile, pinNum);
-                solid = std::max(solid, pinValue);
+                char pinSolid = 0;
+                for (int layer = 0; layer < NUM_LAYERS; layer++) {
+                    short tile = Tiles::GetInstance().GetTile(tileX, tileY, layer);
+                    char pinValue = GameAssets::GetInstance().GetPin(tile, pinNum);
+                    if (pinValue == PIN_IGNORE) {
+                        pinSolid = 0;
+                        break;
+                    }
+                    pinSolid = std::max(pinSolid, pinValue);
+                }
+                solid = std::max(solid, pinSolid);
             }
             pinNum++;
         }
@@ -156,23 +173,15 @@ char GetSolidAtTile(Rectangle rect, int tileX, int tileY, int layer) {
     return solid;
 }
 
-char CheckSolidAllAround(float x, float y, int layer) {
+char GetSolid(float x, float y) {
     Rectangle rect = {x - PLAYER_WIDTH_HALF, y - PLAYER_HEIGHT_HALF * 2, PLAYER_WIDTH_HALF * 2, PLAYER_HEIGHT_HALF * 2};
     int tileX = static_cast<int>(floor((x - PLAYER_WIDTH_HALF) / TILE_SIZE));
     int tileY = static_cast<int>(floor(y / TILE_SIZE));
     char solid = 0;
-    solid = std::max(solid, GetSolidAtTile(rect, tileX, tileY, layer));
-    solid = std::max(solid, GetSolidAtTile(rect, tileX + 1, tileY, layer));
-    solid = std::max(solid, GetSolidAtTile(rect, tileX, tileY - 1, layer));
-    solid = std::max(solid, GetSolidAtTile(rect, tileX + 1, tileY - 1, layer));
-    return solid;
-}
-
-char GetSolid(float x, float y) {
-    char solid = 0;
-    for (int layer = 0; layer < NUM_LAYERS; layer++) {
-        solid = std::max(solid, CheckSolidAllAround(x, y, layer));
-    }
+    solid = std::max(solid, GetSolidAtTile(rect, tileX, tileY));
+    solid = std::max(solid, GetSolidAtTile(rect, tileX + 1, tileY));
+    solid = std::max(solid, GetSolidAtTile(rect, tileX, tileY - 1));
+    solid = std::max(solid, GetSolidAtTile(rect, tileX + 1, tileY - 1));
     return solid;
 }
 
@@ -184,12 +193,29 @@ void Player::TryMove(Vector2 by) {
         return;
     }
 #endif
-    if (GetSolid(position.x + by.x, position.y) != 1) {
+    PlayerState appropriateState = Running;
+    if (!IsClimbing() && GetSolid(position.x + by.x, position.y) != PIN_SOLID) {
         position.x += by.x;
     }
-    if (GetSolid(position.x, position.y + by.y) != 1) {
-        position.y += by.y;
+    char pinValue = GetSolid(position.x, position.y + by.y);
+    if (pinValue != PIN_SOLID) {
+        if (pinValue == PIN_CLIMBABLE) {
+            if (by.y < 0) {
+                appropriateState = ClimbingDown;
+            } else {
+                appropriateState = ClimbingUp;
+            }
+            int gridX = static_cast<int>(floor(position.x / TILE_SIZE));
+            position.x = (static_cast<float>(gridX) + 0.5f) * TILE_SIZE;
+        }
+        float velocity = by.y;
+        if (IsClimbing()) {
+            animTime += GetFrameTime();
+            velocity *= CLIMB_SPEED_SLOWDOWN;
+        }
+        position.y += velocity;
     }
+    SetState(appropriateState);
 }
 
 void Player::ChangeScene(Vector2 newPosition, int changeSceneX, int changeSceneY) {
@@ -243,4 +269,8 @@ void Player::CheckOutOfBounds() {
     if (position.y > BOTTOM_EDGE) {
         ChangeScene({position.x, TOP_EDGE}, 0, 1);
     }
+}
+
+bool Player::IsClimbing() {
+    return state == ClimbingUp || state == ClimbingDown;
 }

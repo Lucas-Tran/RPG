@@ -8,7 +8,9 @@
 
 enum PlayerState {
     Idle,
-    Running
+    Running,
+    ClimbingUp,
+    ClimbingDown
 };
 
 enum PlayerDirection {
@@ -42,6 +44,8 @@ private:
     void CheckOutOfBounds();
 
     void ChangeScene(Vector2 newPosition, int changeSceneX, int changeSceneY);
+
+    bool IsClimbing();
 
     Vector2 position;
     PlayerState state;

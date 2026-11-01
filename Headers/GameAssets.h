@@ -28,9 +28,14 @@ public:
 
     AnimationAllDirections& GetIdleAnimation();
     AnimationAllDirections& GetRunAnimation();
+
+    Animation& GetClimbUpAnimation();
+    Animation& GetClimbDownAnimation();
 private:
     AnimationAllDirections idleAnimation;
     AnimationAllDirections runAnimation;
+    Animation climbUpAnimation;
+    Animation climbDownAnimation;
 };
 
 class GameAssets {
@@ -63,7 +68,7 @@ private:
 
     void LoadTilePins(short expectedNumPins);
     void MarkAnimateFlag(short index);
-    void AddAnimatedTile(std::string path, float frameDelay);
+    void LoadAnimatedTile(std::string path, float frameDelay, int width, int height);
 
     void LoadAnimatedTileDirectory(std::string directory);
 

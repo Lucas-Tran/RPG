@@ -17,11 +17,14 @@ public:
     void Update(Camera2D camera);
     void DrawCursor();
     void DrawPallete();
+    void DrawTextInfo();
     bool IsEditorEnabled();
     bool IsMouseOffPalette();
     int GetLayer();
     bool IsOnionModeEnabled();
     void TurnEditorOff();
+
+    bool IsPalleteOnly();
 private:
     LevelEditor();
     void SetLayer(int layer);
@@ -46,7 +49,7 @@ private:
 
     short selectedPalleteIndex;
 
-    bool editorEnabled;
+    int editorMode;
 
     float time;
 

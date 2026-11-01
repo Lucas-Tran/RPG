@@ -6,6 +6,7 @@
 class Animation {
 public:
     Animation(std::string path, float frameDelay);
+    Animation(std::string path, Rectangle cropRegion, float frameDelay);
 
     ~Animation();
 
