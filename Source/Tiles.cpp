@@ -232,3 +232,9 @@ void Tiles::SetTileDataString(int tileIndex, int dataIndex, const std::string& v
 void Tiles::ClearTileData(int tileIndex) {
     tileData.erase(tileIndex);
 }
+
+void Tiles::IterateTileData(std::function<void(int tileIndex, TileData data)> callback) {
+    for (const auto& [tileIndex, data] : tileData) {
+        callback(tileIndex, data);
+    }
+}

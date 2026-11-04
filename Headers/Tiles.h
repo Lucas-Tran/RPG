@@ -5,7 +5,7 @@
 
 #include <array>
 #include <string>
-#include <map>
+#include <functional>
 
 struct TileData {
     std::array<int, TILE_DATA_SIZE_INT> intData = {};
@@ -49,6 +49,8 @@ public:
     void SetTileDataString(int tileIndex, int dataIndex, const std::string& value);
 
     void ClearTileData(int tileIndex);
+
+    void IterateTileData(std::function<void(int tileIndex, TileData data)> callback);
 private:
     Tiles();
 

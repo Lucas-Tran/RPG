@@ -60,4 +60,7 @@ constexpr int TILE_DATA_SIZE_STRING = 20;
 
 constexpr float M_ICON_SIZE = TILE_SIZE / 4;
 
+
+constexpr int SLOT_SCENE_NAME = 0;
+
 #endif

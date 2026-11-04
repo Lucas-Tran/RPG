@@ -39,8 +39,6 @@ private:
 
     void UpdateDirection(Vector2 movement);
 
-    void TryMove(Vector2 by);
-
     void CheckOutOfBounds();
 
     void ChangeScene(Vector2 newPosition, int changeSceneX, int changeSceneY);
