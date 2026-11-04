@@ -53,4 +53,11 @@ enum PIN_TYPES {
     PIN_CHANGE_SCENE = 4
 };
 
+constexpr int TILE_DATA_SIZE_INT = 20;
+constexpr int TILE_DATA_SIZE_FLOAT = 20;
+constexpr int TILE_DATA_SIZE_BOOL = 8;
+constexpr int TILE_DATA_SIZE_STRING = 20;
+
+constexpr float M_ICON_SIZE = TILE_SIZE / 4;
+
 #endif

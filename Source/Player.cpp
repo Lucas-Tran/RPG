@@ -209,7 +209,7 @@ void Player::TryMove(Vector2 by) {
             position.x = (static_cast<float>(gridX) + 0.5f) * TILE_SIZE;
         }
         float velocity = by.y;
-        if (IsClimbing()) {
+        if (velocity != 0 && IsClimbing()) {
             animTime += GetFrameTime();
             velocity *= CLIMB_SPEED_SLOWDOWN;
         }

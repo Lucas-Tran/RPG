@@ -10,7 +10,6 @@ frameDelay(frameDelay) {
      if (gifImage.data == nullptr) {
          throw std::runtime_error("Failed to load GIF image:" + path);
      }
-    std::cout << cropRegion.x << " " << cropRegion.y << std::endl;
 
     frames = new Texture2D[totalAnimationFrames];
 

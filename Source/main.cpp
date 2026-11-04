@@ -51,6 +51,7 @@ int main() {
         Player::GetInstance().DrawPlayer();
         Tiles::GetInstance().DrawVisibleRegion(camera, 2);
 #ifdef ENABLE_LEVEL_EDITOR
+        Tiles::GetInstance().DrawTileData();
         LevelEditor::GetInstance().DrawCursor();
 #endif
         EndMode2D();

@@ -32,7 +32,7 @@ void Tiles::Init(int width, int height) {
     this->height = height;
 }
 
-short Tiles::GetTile(int index) const {
+short Tiles::GetTile(int index) {
     if (map == nullptr) {
         throw std::logic_error("Map has not been initialized");
     }
@@ -54,7 +54,7 @@ void Tiles::SetTile(int index, short tile) {
     map[index] = tile;
 }
 
-short Tiles::GetTile(int x, int y, int layer) const {
+short Tiles::GetTile(int x, int y, int layer) {
     if (map == nullptr) {
         throw std::logic_error("Map has not been initialized");
     }
@@ -76,11 +76,11 @@ void Tiles::SetTile(int x, int y, int layer, short tile) {
     map[index] = tile;
 }
 
-int Tiles::GetWidth() const {
+int Tiles::GetWidth() {
     return width;
 }
 
-int Tiles::GetHeight() const {
+int Tiles::GetHeight() {
     return height;
 }
 
@@ -88,7 +88,7 @@ constexpr short BACKGROUND_TILE = 24;
 
 constexpr Color ONION_MODE_TINT = {255, 255, 255, 70};
 
-void Tiles::DrawVisibleRegion(Camera2D& camera2D, int layer) const {
+void Tiles::DrawVisibleRegion(Camera2D& camera2D, int layer) {
     int screenWidthTiles = GetScreenWidth() / TILE_SIZE + 2;
     int screenHeightTiles = GetScreenHeight() / TILE_SIZE + 2;
     int drawOffsetX = -static_cast<int>(camera2D.offset.x);
@@ -134,10 +134,101 @@ void Tiles::DrawVisibleRegion(Camera2D& camera2D, int layer) const {
     }
 }
 
-int Tiles::GetLayerSize() const {
+#ifdef ENABLE_LEVEL_EDITOR
+void Tiles::DrawTileData() {
+    if (!LevelEditor::GetInstance().IsEditorEnabled()) {
+        return;
+    }
+    for (const auto& [tileIndex, tileData] : tileData) {
+            int x = tileIndex % width;
+            int y = (tileIndex / width) % height;
+            float tileX = static_cast<float>(x) * TILE_SIZE;
+            float tileY = static_cast<float>(y) * TILE_SIZE;
+            constexpr float M_ICON_SIZE_BORDER = M_ICON_SIZE + 4;
+            DrawRectangle(tileX - M_ICON_SIZE_BORDER / 2, tileY - M_ICON_SIZE_BORDER / 2, M_ICON_SIZE_BORDER, M_ICON_SIZE_BORDER, BLACK);
+            DrawRectangle(tileX - M_ICON_SIZE / 2, tileY - M_ICON_SIZE / 2, M_ICON_SIZE, M_ICON_SIZE, WHITE);
+            constexpr int TEXT_LEFT_ALIGN = 5;
+            DrawText("M", tileX - TEXT_LEFT_ALIGN, tileY - TEXT_LEFT_ALIGN, 15, BLACK);
+    }
+}
+#endif
+
+int Tiles::GetLayerSize() {
     return width * height;
 }
 
-int Tiles::GetNumTiles() const {
+int Tiles::GetNumTiles() {
     return Tiles::GetLayerSize() * NUM_LAYERS;
+}
+
+int Tiles::GetTileDataInt(int tileIndex, int dataIndex) {
+    if (dataIndex < 0 || dataIndex >= TILE_DATA_SIZE_INT) {
+        throw std::out_of_range("Data index is out of range");
+    }
+    if (tileData.find(tileIndex) == tileData.end()) {
+        return 0;
+    }
+    return tileData[tileIndex].intData[dataIndex];
+}
+
+float Tiles::GetTileDataFloat(int tileIndex, int dataIndex) {
+    if (dataIndex < 0 || dataIndex >= TILE_DATA_SIZE_FLOAT) {
+        throw std::out_of_range("Data index is out of range");
+    }
+    if (tileData.find(tileIndex) == tileData.end()) {
+        return 0.0f;
+    }
+    return tileData[tileIndex].floatData[dataIndex];
+}
+
+bool Tiles::GetTileDataBool(int tileIndex, int dataIndex) {
+    if (dataIndex < 0 || dataIndex >= TILE_DATA_SIZE_BOOL) {
+        throw std::out_of_range("Data index is out of range");
+    }
+    if (tileData.find(tileIndex) == tileData.end()) {
+        return false;
+    }
+    return tileData[tileIndex].boolData[dataIndex];
+}
+
+std::string Tiles::GetTileDataString(int tileIndex, int dataIndex) {
+    if (dataIndex < 0 || dataIndex >= TILE_DATA_SIZE_STRING) {
+        throw std::out_of_range("Data index is out of range");
+    }
+    if (tileData.find(tileIndex) == tileData.end()) {
+        return "";
+    }
+    return tileData[tileIndex].stringData[dataIndex];
+}
+
+void Tiles::SetTileDataInt(int tileIndex, int dataIndex, int value) {
+    if (dataIndex < 0 || dataIndex >= TILE_DATA_SIZE_INT) {
+        throw std::out_of_range("Data index is out of range");
+    }
+    tileData[tileIndex].intData[dataIndex] = value;
+}
+
+void Tiles::SetTileDataFloat(int tileIndex, int dataIndex, float value) {
+    if (dataIndex < 0 || dataIndex >= TILE_DATA_SIZE_FLOAT) {
+        throw std::out_of_range("Data index is out of range");
+    }
+    tileData[tileIndex].floatData[dataIndex] = value;
+}
+
+void Tiles::SetTileDataBool(int tileIndex, int dataIndex, bool value) {
+    if (dataIndex < 0 || dataIndex >= TILE_DATA_SIZE_BOOL) {
+        throw std::out_of_range("Data index is out of range");
+    }
+    tileData[tileIndex].boolData[dataIndex] = value;
+}
+
+void Tiles::SetTileDataString(int tileIndex, int dataIndex, const std::string& value) {
+    if (dataIndex < 0 || dataIndex >= TILE_DATA_SIZE_STRING) {
+        throw std::out_of_range("Data index is out of range");
+    }
+    tileData[tileIndex].stringData[dataIndex] = value;
+}
+
+void Tiles::ClearTileData(int tileIndex) {
+    tileData.erase(tileIndex);
 }

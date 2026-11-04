@@ -181,6 +181,90 @@ void LevelEditor::Update(Camera2D camera) {
             short tile = Tiles::GetInstance().GetTile(cursorPositionX, cursorPositionY, layer);
             selectedPalleteIndex = std::find(palleteGrid, palleteGrid + TILESET_SIZE, tile) - palleteGrid;
         }
+        if (IsKeyPressed(KEY_M)) {
+            int tileIndex = cursorPositionX + cursorPositionY * Tiles::GetInstance().GetWidth() + layer * Tiles::GetInstance().GetLayerSize();
+            if (IsKeyDown(KEY_N)) {
+                std::cout << std::endl;
+                std::cout << "Tile index: " << tileIndex << std::endl;
+                std::cout << "Int data: " << std::endl;
+                std::cout << "----------------" << std::endl;
+                for (int i = 0; i < TILE_DATA_SIZE_INT; i++) {
+                    std::cout << "Index " << i << ": " << Tiles::GetInstance().GetTileDataInt(tileIndex, i) << std::endl;
+                }
+                std::cout << "Float data: " << std::endl;
+                std::cout << "----------------" << std::endl;
+                for (int i = 0; i < TILE_DATA_SIZE_FLOAT; i++) {
+                    std::cout << "Index " << i << ": " << Tiles::GetInstance().GetTileDataFloat(tileIndex, i) << std::endl;
+                }
+                std::cout << "Bool data: " << std::endl;
+                std::cout << "----------------" << std::endl;
+                for (int i = 0; i < TILE_DATA_SIZE_BOOL; i++) {
+                    std::cout << "Index " << i << ": " << Tiles::GetInstance().GetTileDataBool(tileIndex, i) << std::endl;
+                }
+                std::cout << "String data: " << std::endl;
+                std::cout << "----------------" << std::endl;
+                for (int i = 0; i < TILE_DATA_SIZE_STRING; i++) {
+                    std::cout << "Index " << i << ": " << Tiles::GetInstance().GetTileDataString(tileIndex, i) << std::endl;
+                }
+            } else {
+                char dataType;
+                std::cout << "Enter data type (I for int, F for float, B for bool, S for string) or C for clear: ";
+                std::cin >> dataType;
+                switch (dataType) {
+                    case 'I': {
+                        int dataIndex;
+                        int value;
+                        std::cout << "Enter data index: ";
+                        std::cin >> dataIndex;
+                        std::cout << "Enter data value: ";
+                        std::cin >> value;
+                        Tiles::GetInstance().SetTileDataInt(tileIndex, dataIndex, value);
+                        break;
+                    }
+                    case 'F': {
+                        int dataIndex;
+                        float value;
+                        std::cout << "Enter data index: ";
+                        std::cin >> dataIndex;
+                        std::cout << "Enter data value: ";
+                        std::cin >> value;
+                        Tiles::GetInstance().SetTileDataFloat(tileIndex, dataIndex, value);
+                        break;
+                    }
+                    case 'B': {
+                        int dataIndex;
+                        bool value;
+                        std::cout << "Enter data index: ";
+                        std::cin >> dataIndex;
+                        std::cout << "Enter data value (0 for false, 1 for true): ";
+                        std::cin >> value;
+                        Tiles::GetInstance().SetTileDataBool(tileIndex, dataIndex, value);
+                        break;
+                    }
+                    case 'S': {
+                        int dataIndex;
+                        std::string value;
+                        std::cout << "Enter data index: ";
+                        std::cin >> dataIndex;
+                        std::cout << "Enter data value: ";
+                        std::getline(std::cin >> std::ws, value); // Use std::ws to consume any leading whitespace
+                        Tiles::GetInstance().SetTileDataString(tileIndex, dataIndex, value);
+                        break;
+                    }
+                    case 'C': {
+                        bool confirm;
+                        std::cout << "Are you sure you want to clear all data for this tile? (1 for yes, 0 for no): ";
+                        std::cin >> confirm;
+                        if (confirm) {
+                            Tiles::GetInstance().ClearTileData(tileIndex);
+                        }
+                        break;
+                    }
+                    default:
+                        std::cerr << "Invalid data type. Use 'I' for int, 'F' for float, 'B' for bool 'S' for string, or 'C' for clear." << std::endl;
+                }
+            }
+        }
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             short tile = palleteGrid[selectedPalleteIndex];
             int paintLayer = ((autoLayering && tile != EMPTY_TILE && tileLayers[tile] != 0) ? tileLayers[tile] - 1 : layer);
