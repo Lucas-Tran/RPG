@@ -7,7 +7,7 @@ void SetSceneName(std::string newName);
 
 std::string GetSceneName();
 
-void NewMap(int width, int height);
+void NewMapOver(int width, int height);
 
 void SaveScene();
 

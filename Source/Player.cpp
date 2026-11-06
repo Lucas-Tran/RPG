@@ -7,6 +7,7 @@
 #include <Input.h>
 
 #include <algorithm>
+#include <numbers>
 #include <sstream>
 
 #include "MapStorage.h"
@@ -89,8 +90,15 @@ void Player::Update() {
         TryMove(position, movement, infoHorizontal, infoVertical);
         if (infoHorizontal.maxPin == PIN_CHANGE_SCENE) {
             std::string sceneName = Tiles::GetInstance().GetTileDataString(infoHorizontal.tileIndex, SLOT_SCENE_NAME);
+            float newX = Tiles::GetInstance().GetTileDataFloat(infoHorizontal.tileIndex, SLOT_PLAYER_X) * TILE_SIZE;
+            float newY = Tiles::GetInstance().GetTileDataFloat(infoHorizontal.tileIndex, SLOT_PLAYER_Y) * TILE_SIZE;
             SetSceneName(sceneName);
-            GameManager::GetInstance().SetCutsceneFunction(LoadScene);
+            auto sceneTransition = [this, newX, newY]() {
+                LoadScene();
+                position = { newX, newY };
+            };
+            GameManager::GetInstance().SetCutsceneFunction(sceneTransition);
+            return;
         }
         if (infoVertical.maxPin == PIN_CLIMBABLE) {
             if (movement.y < 0) {
@@ -143,27 +151,30 @@ void Player::UpdateCamera(Camera2D& camera) const {
     float offset = 0;
 #ifdef ENABLE_LEVEL_EDITOR
     if (LevelEditor::GetInstance().IsPalleteOnly()) {
-        float palleteWidth = PALETTE_WIDTH_PIXELS;
-        offset = palleteWidth;
+        offset = PALETTE_WIDTH_PIXELS;
     }
 #endif
     camera.target = position;
     camera.target.x += offset / 2;
     float screenWidthHalf = static_cast<float>(GetScreenWidth()) / 2;
     float screenHeightHalf = static_cast<float>(GetScreenHeight()) / 2;
-    if (camera.target.x < screenWidthHalf) {
-        camera.target.x = screenWidthHalf;
-    }
-    if (camera.target.y < screenHeightHalf) {
-        camera.target.y = screenHeightHalf;
-    }
     float mapRightEdge = offset + static_cast<float>(Tiles::GetInstance().GetWidth() * TILE_SIZE) - screenWidthHalf;
-    if (camera.target.x > mapRightEdge) {
-        camera.target.x = mapRightEdge;
-    }
     float mapBottomEdge = static_cast<float>(Tiles::GetInstance().GetHeight() * TILE_SIZE) - screenHeightHalf;
-    if (camera.target.y > mapBottomEdge) {
-        camera.target.y = mapBottomEdge;
+    if (mapRightEdge > screenWidthHalf) {
+        if (camera.target.x < screenWidthHalf) {
+            camera.target.x = screenWidthHalf;
+        }
+        if (camera.target.x > mapRightEdge) {
+            camera.target.x = mapRightEdge;
+        }
+    }
+    if (mapBottomEdge > screenHeightHalf) {
+        if (camera.target.y < screenHeightHalf) {
+            camera.target.y = screenHeightHalf;
+        }
+        if (camera.target.y > mapBottomEdge) {
+            camera.target.y = mapBottomEdge;
+        }
     }
 }
 void Player::SetState(PlayerState newState) {
@@ -194,8 +205,10 @@ void GetSolidAtTile(Rectangle rect, int tileX, int tileY, TileCollisionInfo &inf
                     if (pinValue == PIN_IGNORE || pinValue == PIN_CLIMBABLE) {
                         ignore = true;
                     }
-                    info.maxPin = std::max(info.maxPin, pinValue);
-                    info.tileIndex = Tiles::GetInstance().GetWidth() * tileY + tileX;
+                    if (pinValue > info.maxPin) {
+                        info.maxPin = pinValue;
+                        info.tileIndex = Tiles::GetInstance().GetLayerSize() * layer + Tiles::GetInstance().GetWidth() * tileY + tileX;
+                    }
                 }
                 solid = solid && !ignore;
                 info.solid = info.solid || solid;
@@ -288,4 +301,8 @@ void Player::CheckOutOfBounds() {
 
 bool Player::IsClimbing() {
     return state == ClimbingUp || state == ClimbingDown;
+}
+
+Vector2 Player::GetPosition() {
+    return position;
 }

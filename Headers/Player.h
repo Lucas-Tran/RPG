@@ -30,6 +30,8 @@ public:
     Player(const Player&) = delete;
     Player& operator=(const Player&) = delete;
 
+
+    Vector2 GetPosition();
 private:
     Player();
 
@@ -44,6 +46,7 @@ private:
     void ChangeScene(Vector2 newPosition, int changeSceneX, int changeSceneY);
 
     bool IsClimbing();
+
 
     Vector2 position;
     PlayerState state;

@@ -18,6 +18,7 @@ constexpr float PLAYER_SPEED = 160.0f;
 constexpr float CLIMB_SPEED_SLOWDOWN = 0.5f;
 constexpr int TILE_SIZE = 64;
 constexpr int EMPTY_TILE = -1;
+constexpr int FLOOR_TILE = 55;
 
 constexpr int PADDING = 8;
 constexpr int PALETTE_WIDTH = 5;
@@ -29,7 +30,7 @@ constexpr int NUM_LAYERS = 3;
 constexpr int COLLISION_PIN_DISTANCE = (TILE_SIZE / 2) - 10;
 constexpr int COLLISION_PIN_RADIUS = 5;
 constexpr int PIN_COUNT_ROW = 3;
-constexpr int DEFAULT_MAP_SIZE = 32;
+constexpr int DEFAULT_MAP_SIZE_OVER = 11;
 
 constexpr float PLAYER_WIDTH_HALF = 24;
 constexpr float PLAYER_HEIGHT_HALF = 16;
@@ -55,12 +56,13 @@ enum PIN_TYPES {
 
 constexpr int TILE_DATA_SIZE_INT = 20;
 constexpr int TILE_DATA_SIZE_FLOAT = 20;
-constexpr int TILE_DATA_SIZE_BOOL = 8;
 constexpr int TILE_DATA_SIZE_STRING = 20;
 
 constexpr float M_ICON_SIZE = TILE_SIZE / 4;
 
 
 constexpr int SLOT_SCENE_NAME = 0;
+constexpr int SLOT_PLAYER_X = 0;
+constexpr int SLOT_PLAYER_Y = 1;
 
 #endif

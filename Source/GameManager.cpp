@@ -14,3 +14,11 @@ void GameManager::CheckAndDoCutscenes() {
         cutsceneFunction = nullptr;
     }
 }
+
+void GameManager::SetEnviornmentType(EnviornmentType type) {
+    enviornmentType = type;
+}
+
+EnviornmentType GameManager::GetEnviornmentType() {
+    return enviornmentType;
+}

@@ -10,8 +10,8 @@
 struct TileData {
     std::array<int, TILE_DATA_SIZE_INT> intData = {};
     std::array<float, TILE_DATA_SIZE_FLOAT> floatData = {};
-    std::array<bool, TILE_DATA_SIZE_BOOL> boolData = {};
     std::array<std::string, TILE_DATA_SIZE_STRING> stringData;
+    int boolFlags = 0;
 };
 
 class Tiles {
@@ -40,17 +40,22 @@ public:
 
     int GetTileDataInt(int tileIndex, int dataIndex);
     float GetTileDataFloat(int tileIndex, int dataIndex);
-    bool GetTileDataBool(int tileIndex, int dataIndex);
+    bool GetTileDataFlag(int tileIndex, int dataIndex);
     std::string GetTileDataString(int tileIndex, int dataIndex);
 
     void SetTileDataInt(int tileIndex, int dataIndex, int value);
     void SetTileDataFloat(int tileIndex, int dataIndex, float value);
-    void SetTileDataBool(int tileIndex, int dataIndex, bool value);
+    void SetTileDataFlag(int tileIndex, int dataIndex, bool value);
     void SetTileDataString(int tileIndex, int dataIndex, const std::string& value);
 
+    void SetBoolFlags(int tileIndex, int boolFlags);
+
     void ClearTileData(int tileIndex);
+    void ClearAllTileData();
 
     void IterateTileData(std::function<void(int tileIndex, TileData data)> callback);
+
+    bool IsTileInBounds(int x, int y, int layer);
 private:
     Tiles();
 

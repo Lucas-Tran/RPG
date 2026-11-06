@@ -3,6 +3,11 @@
 
 #include <functional>
 
+enum class EnviornmentType {
+    OVERWORLD,
+    BUILDING
+};
+
 class GameManager {
 public:
     GameManager();
@@ -17,7 +22,13 @@ public:
     void SetCutsceneFunction(std::function<void()> cutsceneFunction);
 
     void CheckAndDoCutscenes();
+
+    void SetEnviornmentType(EnviornmentType type);
+
+    EnviornmentType GetEnviornmentType();
 private:
+
+    EnviornmentType enviornmentType;
 
     std::function<void()> cutsceneFunction;
 };

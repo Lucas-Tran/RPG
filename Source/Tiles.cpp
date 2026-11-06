@@ -58,7 +58,7 @@ short Tiles::GetTile(int x, int y, int layer) {
     if (map == nullptr) {
         throw std::logic_error("Map has not been initialized");
     }
-    if (x < 0 || x >= width || y < 0 || y >= height || layer < 0 || layer >= NUM_LAYERS) {
+    if (!IsTileInBounds(x, y, layer)) {
         return EMPTY_TILE;
     }
     int index = layer * GetLayerSize() + y * width + x;
@@ -69,7 +69,7 @@ void Tiles::SetTile(int x, int y, int layer, short tile) {
     if (map == nullptr) {
         throw std::logic_error("Map has not been initialized");
     }
-    if (x < 0 || x >= width || y < 0 || y >= height || layer < 0 || layer >= NUM_LAYERS) {
+    if (!IsTileInBounds(x, y, layer)) {
         throw std::out_of_range("Tile coordinates or layer are outside the map");
     }
     int index = layer * GetLayerSize() + y * width + x;
@@ -108,9 +108,25 @@ void Tiles::DrawVisibleRegion(Camera2D& camera2D, int layer) {
                 } else {
                     tint = WHITE;
                 }
-                DrawTexture(GameAssets::GetInstance().GetTile(BACKGROUND_TILE), tileX, tileY, tint);
+                if (GameManager::GetInstance().GetEnviornmentType() == EnviornmentType::OVERWORLD) {
+                    DrawTexture(GameAssets::GetInstance().GetTile(BACKGROUND_TILE), tileX, tileY, tint);
+                } else {
+                    if (IsTileInBounds(x, y, layer)) {
+                        DrawTexture(GameAssets::GetInstance().GetTile(FLOOR_TILE), tileX, tileY, tint);
+                    } else {
+                        DrawRectangle(tileX, tileY, TILE_SIZE, TILE_SIZE, BLACK);
+                    }
+                }
 #else
-                DrawTexture(GameAssets::GetInstance().GetTile(BACKGROUND_TILE), tileX, tileY, WHITE);
+                if (GameManager::GetInstance().GetEnviornmentType() == EnviornmentType::OVERWORLD) {
+                    DrawTexture(GameAssets::GetInstance().GetTile(BACKGROUND_TILE), tileX, tileY, tint);
+                } else {
+                    if (IsTileInBounds(x, y, layer)) {
+                        DrawTexture(GameAssets::GetInstance().GetTile(FLOOR_TILE), tileX, tileY, tint);
+                    } else {
+                        DrawRectangle(tileX, tileY, TILE_SIZE, TILE_SIZE, BLACK);
+                    }
+                }
 #endif
             }
             short tile = GetTile(x, y, layer);
@@ -140,13 +156,14 @@ void Tiles::DrawTileData() {
         return;
     }
     for (const auto& [tileIndex, tileData] : tileData) {
+            Color tint = (LevelEditor::GetInstance().IsOnionModeEnabled() && LevelEditor::GetInstance().GetLayer() != (tileIndex / GetLayerSize())) ? ONION_MODE_TINT : WHITE;
             int x = tileIndex % width;
             int y = (tileIndex / width) % height;
             float tileX = static_cast<float>(x) * TILE_SIZE;
             float tileY = static_cast<float>(y) * TILE_SIZE;
             constexpr float M_ICON_SIZE_BORDER = M_ICON_SIZE + 4;
             DrawRectangle(tileX - M_ICON_SIZE_BORDER / 2, tileY - M_ICON_SIZE_BORDER / 2, M_ICON_SIZE_BORDER, M_ICON_SIZE_BORDER, BLACK);
-            DrawRectangle(tileX - M_ICON_SIZE / 2, tileY - M_ICON_SIZE / 2, M_ICON_SIZE, M_ICON_SIZE, WHITE);
+            DrawRectangle(tileX - M_ICON_SIZE / 2, tileY - M_ICON_SIZE / 2, M_ICON_SIZE, M_ICON_SIZE, tint);
             constexpr int TEXT_LEFT_ALIGN = 5;
             DrawText("M", tileX - TEXT_LEFT_ALIGN, tileY - TEXT_LEFT_ALIGN, 15, BLACK);
     }
@@ -181,14 +198,14 @@ float Tiles::GetTileDataFloat(int tileIndex, int dataIndex) {
     return tileData[tileIndex].floatData[dataIndex];
 }
 
-bool Tiles::GetTileDataBool(int tileIndex, int dataIndex) {
-    if (dataIndex < 0 || dataIndex >= TILE_DATA_SIZE_BOOL) {
+bool Tiles::GetTileDataFlag(int tileIndex, int dataIndex) {
+    if (dataIndex < 0 || dataIndex >= 32) {
         throw std::out_of_range("Data index is out of range");
     }
     if (tileData.find(tileIndex) == tileData.end()) {
         return false;
     }
-    return tileData[tileIndex].boolData[dataIndex];
+    return (tileData[tileIndex].boolFlags >> dataIndex) & 1;
 }
 
 std::string Tiles::GetTileDataString(int tileIndex, int dataIndex) {
@@ -215,11 +232,11 @@ void Tiles::SetTileDataFloat(int tileIndex, int dataIndex, float value) {
     tileData[tileIndex].floatData[dataIndex] = value;
 }
 
-void Tiles::SetTileDataBool(int tileIndex, int dataIndex, bool value) {
-    if (dataIndex < 0 || dataIndex >= TILE_DATA_SIZE_BOOL) {
+void Tiles::SetTileDataFlag(int tileIndex, int dataIndex, bool value) {
+    if (dataIndex < 0 || dataIndex >= 32) {
         throw std::out_of_range("Data index is out of range");
     }
-    tileData[tileIndex].boolData[dataIndex] = value;
+    tileData[tileIndex].boolFlags = (tileData[tileIndex].boolFlags & ~(1 << dataIndex)) | (value << dataIndex);
 }
 
 void Tiles::SetTileDataString(int tileIndex, int dataIndex, const std::string& value) {
@@ -237,4 +254,16 @@ void Tiles::IterateTileData(std::function<void(int tileIndex, TileData data)> ca
     for (const auto& [tileIndex, data] : tileData) {
         callback(tileIndex, data);
     }
+}
+
+void Tiles::SetBoolFlags(int tileIndex, int boolFlags) {
+    tileData[tileIndex].boolFlags = boolFlags;
+}
+
+void Tiles::ClearAllTileData() {
+    tileData.clear();
+}
+
+bool Tiles::IsTileInBounds(int x, int y, int layer) {
+    return (x >= 0 && x < width && y >= 0 && y < height && layer >= 0 && layer < NUM_LAYERS);
 }

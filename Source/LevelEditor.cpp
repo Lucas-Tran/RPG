@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <fstream>
 
+#include "Player.h"
+
 LevelEditor::LevelEditor() {
     LoadImages();
 
@@ -196,72 +198,77 @@ void LevelEditor::Update(Camera2D camera) {
                 for (int i = 0; i < TILE_DATA_SIZE_FLOAT; i++) {
                     std::cout << "Index " << i << ": " << Tiles::GetInstance().GetTileDataFloat(tileIndex, i) << std::endl;
                 }
-                std::cout << "Bool data: " << std::endl;
-                std::cout << "----------------" << std::endl;
-                for (int i = 0; i < TILE_DATA_SIZE_BOOL; i++) {
-                    std::cout << "Index " << i << ": " << Tiles::GetInstance().GetTileDataBool(tileIndex, i) << std::endl;
-                }
                 std::cout << "String data: " << std::endl;
                 std::cout << "----------------" << std::endl;
                 for (int i = 0; i < TILE_DATA_SIZE_STRING; i++) {
                     std::cout << "Index " << i << ": " << Tiles::GetInstance().GetTileDataString(tileIndex, i) << std::endl;
                 }
+                std::cout << "Bool flags: " << std::endl;
+                std::cout << "----------------" << std::endl;
+                for (int i = 0; i < 32; i++) {
+                    std::cout << "Index " << i << ": " << Tiles::GetInstance().GetTileDataFlag(tileIndex, i) << std::endl;
+                }
             } else {
-                char dataType;
-                std::cout << "Enter data type (I for int, F for float, B for bool, S for string) or C for clear: ";
-                std::cin >> dataType;
-                switch (dataType) {
-                    case 'I': {
-                        int dataIndex;
-                        int value;
-                        std::cout << "Enter data index: ";
-                        std::cin >> dataIndex;
-                        std::cout << "Enter data value: ";
-                        std::cin >> value;
-                        Tiles::GetInstance().SetTileDataInt(tileIndex, dataIndex, value);
+                while (true) {
+                    char dataType;
+                    std::cout << "Enter data type (I for int, F for float, B for bool, S for string), C for clear, or Q for quit: ";
+                    std::cin >> dataType;
+                    if (dataType == 'Q') {
                         break;
                     }
-                    case 'F': {
-                        int dataIndex;
-                        float value;
-                        std::cout << "Enter data index: ";
-                        std::cin >> dataIndex;
-                        std::cout << "Enter data value: ";
-                        std::cin >> value;
-                        Tiles::GetInstance().SetTileDataFloat(tileIndex, dataIndex, value);
-                        break;
-                    }
-                    case 'B': {
-                        int dataIndex;
-                        bool value;
-                        std::cout << "Enter data index: ";
-                        std::cin >> dataIndex;
-                        std::cout << "Enter data value (0 for false, 1 for true): ";
-                        std::cin >> value;
-                        Tiles::GetInstance().SetTileDataBool(tileIndex, dataIndex, value);
-                        break;
-                    }
-                    case 'S': {
-                        int dataIndex;
-                        std::string value;
-                        std::cout << "Enter data index: ";
-                        std::cin >> dataIndex;
-                        std::cout << "Enter data value: ";
-                        std::getline(std::cin >> std::ws, value); // Use std::ws to consume any leading whitespace
-                        Tiles::GetInstance().SetTileDataString(tileIndex, dataIndex, value);
-                        break;
-                    }
-                    case 'C': {
-                        bool confirm;
-                        std::cout << "Are you sure you want to clear all data for this tile? (1 for yes, 0 for no): ";
-                        std::cin >> confirm;
-                        if (confirm) {
-                            Tiles::GetInstance().ClearTileData(tileIndex);
+                    switch (dataType) {
+                        case 'I': {
+                            int dataIndex;
+                            int value;
+                            std::cout << "Enter data index: ";
+                            std::cin >> dataIndex;
+                            std::cout << "Enter data value: ";
+                            std::cin >> value;
+                            Tiles::GetInstance().SetTileDataInt(tileIndex, dataIndex, value);
+                            break;
                         }
-                        break;
+                        case 'F': {
+                            int dataIndex;
+                            float value;
+                            std::cout << "Enter data index: ";
+                            std::cin >> dataIndex;
+                            std::cout << "Enter data value: ";
+                            std::cin >> value;
+                            Tiles::GetInstance().SetTileDataFloat(tileIndex, dataIndex, value);
+                            break;
+                        }
+                        case 'B': {
+                            int dataIndex;
+                            bool value;
+                            std::cout << "Enter data index: ";
+                            std::cin >> dataIndex;
+                            std::cout << "Enter data value (0 for false, 1 for true): ";
+                            std::cin >> value;
+                            Tiles::GetInstance().SetTileDataFlag(tileIndex, dataIndex, value);
+                            break;
+                        }
+                        case 'S': {
+                            int dataIndex;
+                            std::string value;
+                            std::cout << "Enter data index: ";
+                            std::cin >> dataIndex;
+                            std::cout << "Enter data value: ";
+                            std::getline(std::cin >> std::ws, value); // Use std::ws to consume any leading whitespace
+                            Tiles::GetInstance().SetTileDataString(tileIndex, dataIndex, value);
+                            break;
+                        }
+                        case 'C': {
+                            bool confirm;
+                            std::cout << "Are you sure you want to clear all data for this tile? (1 for yes, 0 for no): ";
+                            std::cin >> confirm;
+                            if (confirm) {
+                                Tiles::GetInstance().ClearTileData(tileIndex);
+                            }
+                            break;
+                        }
+                        default:
+                            std::cerr << "Invalid data type. Use 'I' for int, 'F' for float, 'B' for bool 'S' for string, 'C' for clear, 'Q' to quit." << std::endl;
                     }
-                    default:
-                        std::cerr << "Invalid data type. Use 'I' for int, 'F' for float, 'B' for bool 'S' for string, or 'C' for clear." << std::endl;
                 }
             }
         }
@@ -430,15 +437,20 @@ void LevelEditor::DrawTextInfo() {
     if (!IsEditorEnabled()) {
         return;
     }
-    std::string layerText;
+    std::string upperText;
     if (autoLayering) {
-        layerText = "Default Layer: " + std::to_string(layer + 1) + "\nAUTO MODE: ON";
+        upperText = "Default Layer: " + std::to_string(layer + 1) + "\nAUTO MODE: ON";
     } else {
-        layerText = "Layer: " + std::to_string(layer + 1);
+        upperText = "Layer: " + std::to_string(layer + 1);
     }
-    DrawText(layerText.c_str(), 25, 25, 50, BLACK);
+    Vector2 position = Player::GetInstance().GetPosition() / TILE_SIZE;
+    position *= 100;
+    float gridX = floor(position.x) / 100;
+    float gridY = floor(position.y) / 100;
+    upperText += "\nPlayer Position: (" + std::to_string(gridX) + ", " + std::to_string(gridY) + ")";
+    DrawText(upperText.c_str(), 25, 25, 50, WHITE);
 
-    DrawText(GetSceneName().c_str(), 25, GetScreenHeight() - 75, 50, BLACK);
+    DrawText(GetSceneName().c_str(), 25, GetScreenHeight() - 75, 50, WHITE);
 }
 
 
